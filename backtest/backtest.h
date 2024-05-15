@@ -13,7 +13,11 @@
 class BacktestModule {
 public:
     // 执行回测
-    static void backtest(const std::vector<StockData>& data);
+    void backtest(const std::vector<StockData>& data);
+
+    void calculateProfitAndPrintResult(double initialCapital, const TradingModule &tradingModule);
+private:
+    double endingCapital;
 };
 
 #endif //TRADERBACKTEST_BACKTEST_H

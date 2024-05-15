@@ -33,3 +33,37 @@ double TradingModule::calculateProfitLoss(double buyPrice, double sellPrice, int
     // Simple profit/loss calculation
     return (sellPrice - buyPrice) * quantity;
 }
+
+TradingModule::TradingModule(double commissionPercentage) : commissionPercentage(commissionPercentage) {}
+void TradingModule::buy(const std::string& date, const std::string& symbol, double price, int quantity) {
+    // 计算手续费
+    double commission = commissionPercentage * price * quantity;
+
+    // 添加交易信息到列表中
+    TradeInfo trade;
+    trade.date = date;
+    trade.symbol = symbol;
+    trade.price = price;
+    trade.quantity = quantity;
+    trade.type = "buy";
+    trade.commissionPercentage = commissionPercentage;
+    tradeInfoList.push_back(trade);
+}
+
+void TradingModule::sell(const std::string& date, const std::string& symbol, double price, int quantity) {
+    // 计算手续费
+    double commission = commissionPercentage * price * quantity;
+
+    // 添加交易信息到列表中
+    TradeInfo trade;
+    trade.date = date;
+    trade.symbol = symbol;
+    trade.price = price;
+    trade.quantity = quantity;
+    trade.type = "sell";
+    trade.commissionPercentage = commissionPercentage;
+    tradeInfoList.push_back(trade);
+}
+std::vector<TradeInfo> TradingModule::getTradeInfoList() const {
+    return tradeInfoList;
+}

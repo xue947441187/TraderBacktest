@@ -17,12 +17,28 @@ struct Trade {
     int quantity;
     double commission;
 };
+struct TradeInfo {
+    std::string date;
+    std::string symbol;
+    double price;
+    int quantity;
+    std::string type; // "buy" 或 "sell"
+    double commissionPercentage; // 手续费百分比
+};
 
 class TradingModule {
 public:
+    TradingModule(double commissionPercentage = 0); // 构造函数，设置手续费百分比
     void executeTrade(const std::string& date, const std::string& symbol, double price, int quantity);
     double calculateCommission(double price, int quantity);
     double calculateProfitLoss(double buyPrice, double sellPrice, int quantity);
+    void buy(const std::string& date, const std::string& symbol, double price, int quantity);
+    void sell(const std::string& date, const std::string& symbol, double price, int quantity);
+    std::vector<TradeInfo> getTradeInfoList() const;
+private:
+    double commissionPercentage; // 手续费百分比
+    std::vector<TradeInfo> tradeInfoList; // 交易信息列表
+
 };
 
 

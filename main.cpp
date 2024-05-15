@@ -7,9 +7,9 @@
 
 int main() {
     std::vector<StockData> data = readStockData("AAPL.csv");
-
+    BacktestModule backtestModule;
     // 执行回测
-    BacktestModule::backtest(data);
+    backtestModule.backtest(data);
 
 
     return 0;
