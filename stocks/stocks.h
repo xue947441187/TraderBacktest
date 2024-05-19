@@ -12,6 +12,7 @@
 
 struct StockData {
     std::string date;
+    std::string symbol;
     double open;
     double high;
     double low;

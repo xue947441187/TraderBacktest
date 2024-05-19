@@ -38,32 +38,38 @@ TradingModule::TradingModule(double commissionPercentage) : commissionPercentage
 void TradingModule::buy(const std::string& date, const std::string& symbol, double price, int quantity) {
     // 计算手续费
     double commission = commissionPercentage * price * quantity;
+    this->addTrade(const_cast<std::string &>(date), const_cast<std::string &>(symbol), price, quantity, "buy", commission);
 
-    // 添加交易信息到列表中
-    TradeInfo trade;
-    trade.date = date;
-    trade.symbol = symbol;
-    trade.price = price;
-    trade.quantity = quantity;
-    trade.type = "buy";
-    trade.commissionPercentage = commissionPercentage;
-    tradeInfoList.push_back(trade);
 }
+
 
 void TradingModule::sell(const std::string& date, const std::string& symbol, double price, int quantity) {
     // 计算手续费
     double commission = commissionPercentage * price * quantity;
+    this->addTrade(date,symbol,price,quantity,"sell",commission);
 
+}
+std::vector<TradeInfo> TradingModule::getTradeInfoList() const {
+    return tradeInfoList;
+}
+
+void TradingModule::addTrade(const  std::string &date,const std::string &symbol,double price,int quantity,const std::string &type,double commission) {
     // 添加交易信息到列表中
     TradeInfo trade;
     trade.date = date;
     trade.symbol = symbol;
     trade.price = price;
     trade.quantity = quantity;
-    trade.type = "sell";
+    trade.type = type;
     trade.commissionPercentage = commissionPercentage;
+    trade.commission = commission;
     tradeInfoList.push_back(trade);
+    this->totalcommission = this->totalcommission + commission;
 }
-std::vector<TradeInfo> TradingModule::getTradeInfoList() const {
-    return tradeInfoList;
+void TradingModule::setBuyQuantity(int quantity) {
+    buyQuantity = quantity;
+}
+
+int TradingModule::getBuyQuantity() {
+    return buyQuantity;
 }

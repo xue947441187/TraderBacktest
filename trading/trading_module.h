@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include <cmath>
 
 
 struct Trade {
@@ -24,6 +25,7 @@ struct TradeInfo {
     int quantity;
     std::string type; // "buy" 或 "sell"
     double commissionPercentage; // 手续费百分比
+    double commission;
 };
 
 class TradingModule {
@@ -35,10 +37,15 @@ public:
     void buy(const std::string& date, const std::string& symbol, double price, int quantity);
     void sell(const std::string& date, const std::string& symbol, double price, int quantity);
     std::vector<TradeInfo> getTradeInfoList() const;
+    void setBuyQuantity(int quantity);
+    int getBuyQuantity();
 private:
+    double totalcommission;
     double commissionPercentage; // 手续费百分比
     std::vector<TradeInfo> tradeInfoList; // 交易信息列表
 
+    int buyQuantity = 0; // 存储之前买入时的交易数量，初始值为0
+    void addTrade(const std::string &date,const std::string &symbol,double price,int quantity,const std::string &type,double commission);
 };
 
 

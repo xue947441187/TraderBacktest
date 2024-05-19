@@ -2,82 +2,20 @@
 // Created by 薛新岗 on 2024/5/15.
 //
 
+#include <iomanip>
 #include "backtest.h"
 
-//void BacktestModule::backtest(const std::vector<StockData>& data) {
-//    // 初始化回测环境
-//    double initialCapital = 100000.0; // 初始资金
-//    TradingModule tradingModule;
-//
-//    // 是否持有股票的标志
-//    bool holdingStock = false;
-//
-//    // 计算移动平均的窗口大小
-//    int windowSize = 20;
-//
-//    // 交易列表
-//    std::vector<Trade> tradeList;
-//    for (int i = 0; i < data.size(); ++i) {
-//        const auto& stock = data[i];
-//
-//        // 计算移动平均
-//        std::vector<double> prices;
-//        for (int j = std::max(0, i - windowSize + 1); j <= i; ++j) {
-//            prices.push_back(data[j].close);
-//        }
-//        std::vector<double> movingAverage = Indicator::MA(prices, windowSize);
-//        double currentMA = movingAverage.back();
-//
-//        // 根据移动平均线位置执行交易
-//        if (!holdingStock && stock.close > currentMA) {
-//            tradingModule.executeTrade(stock.date, "AAPL", stock.close, 10);
-//            holdingStock = true;
-//
-//            // 添加交易记录到交易列表
-//            Trade trade;
-//            trade.date = stock.date;
-//            trade.symbol = "AAPL";
-//            trade.price = stock.close;
-//            trade.quantity = 10;
-//            tradeList.push_back(trade);
-//        } else if (holdingStock && stock.close < currentMA) {
-//            tradingModule.executeTrade(stock.date, "AAPL", stock.close, -10); // 卖出数量为负数表示卖出
-//            holdingStock = false;
-//
-//            // 添加交易记录到交易列表
-//            Trade trade;
-//            trade.date = stock.date;
-//            trade.symbol = "AAPL";
-//            trade.price = stock.close;
-//            trade.quantity = -10; // 卖出数量为负数表示卖出
-//            tradeList.push_back(trade);
-//        }
-//    }
-//
-//    // 计算收益
-//    double profit = 0.0;
-//    for (const auto& trade : tradeList) {
-//        profit += (trade.quantity * trade.price);
-//    }
-//
-//    // 打印收益
-//    std::cout << "Total Profit: " << profit << std::endl;
-//
-//    }
-
-
-void BacktestModule::backtest(const std::vector<StockData> &data) {
-    double initialCapital = 100000.0;
-    double commissionPercentage = 0.01;
-    TradingModule tradingModule(commissionPercentage);
+void BacktestModule::backtest() {
+    TradingModule tradingModule(this->commissionPercentage);
 
     bool holdingStock = false;
 
     // 计算移动平均的窗口大小
     int windowSize = 10;
 
-    double capital = initialCapital; // 初始资本
+    double capital = this->initCash; // 初始资本
     double totalCommission = 0.0; // 总手续费
+
     for (int i = 0; i < data.size(); ++i) {
         const auto& stock = data[i];
 
@@ -92,33 +30,56 @@ void BacktestModule::backtest(const std::vector<StockData> &data) {
         // 根据移动平均线位置执行交易
         if (!holdingStock && stock.close > currentMA) {
             // 计算手续费
-            double commission = commissionPercentage * stock.close * 10;
+            double commission = commissionPercentage * stock.close * capital / stock.close;
 
-            // 执行买入操作
-            tradingModule.buy(stock.date, "AAPL", stock.close, 10);
+            executeBuy(tradingModule, stock, capital, totalCommission,commission);
             holdingStock = true;
-
-            // 更新资本和总手续费
-            capital -= (stock.close * 10 + commission);
-            totalCommission += commission;
         } else if (holdingStock && stock.close < currentMA) {
             // 计算手续费
-            double commission = commissionPercentage * stock.close * 10;
+            double commission = 0;
 
-            // 执行卖出操作
-            tradingModule.sell(stock.date, "AAPL", stock.close, 10);
+            executeSell(tradingModule, stock, capital, totalCommission,commission);
             holdingStock = false;
-
-            // 更新资本和总手续费
-            capital += (stock.close * 10 - commission);
-            totalCommission += commission;
         }
     }
+
     // 计算收益并打印结果
-    calculateProfitAndPrintResult(initialCapital, tradingModule);
+    calculateProfitAndPrintResult(tradingModule);
 }
 
-void BacktestModule::calculateProfitAndPrintResult(double initialCapital, const TradingModule& tradingModule) {
+void BacktestModule::executeBuy(TradingModule& tradingModule, const StockData& stock, double& capital, double& totalCommission,double &commission) {
+
+
+    // 计算交易数量
+//    int quantity = capital / stock.close;
+    int quantity = std::floor(capital / stock.close);
+    // 执行买入操作
+    tradingModule.buy(stock.date, stock.symbol, stock.close, quantity);
+    tradingModule.setBuyQuantity(quantity); // 设置买入时的交易数量
+
+    // 更新资本和总手续费
+    capital -= (stock.close * quantity);
+    totalCommission += commission;
+}
+
+void BacktestModule::executeSell(TradingModule& tradingModule, const StockData& stock, double& capital, double& totalCommission,double &commission) {
+
+    // 获取之前买入时的交易数量
+    int quantity = tradingModule.getBuyQuantity();
+
+    // 执行卖出操作
+    tradingModule.sell(stock.date, stock.symbol, stock.close, quantity);
+    // 重置买入时的交易数量为0
+    tradingModule.setBuyQuantity(0);
+
+    // 更新资本和总手续费
+    capital += (stock.close * quantity);
+    totalCommission += commission;
+}
+
+
+
+void BacktestModule::calculateProfitAndPrintResult(const TradingModule& tradingModule) {
     // 获取交易列表
     std::vector<TradeInfo> tradeList = tradingModule.getTradeInfoList();
 
@@ -129,10 +90,30 @@ void BacktestModule::calculateProfitAndPrintResult(double initialCapital, const 
     }
     endingCapital = 0;
     // 计算结束时的金额
-    endingCapital = initialCapital + totalProfit;
+    endingCapital = this->initCash + totalProfit;
 
     // 打印结果
-    std::cout << "Initial Capital: " << initialCapital << std::endl;
-    std::cout << "Ending Capital: " << endingCapital << std::endl;
-    std::cout << "Total Profit: " << totalProfit << std::endl;
+    std::cout << "Initial Capital: " << this->initCash << std::endl;
+//    std::cout << "Ending Capital: " << endingCapital << std::endl;
+    std::cout << "Ending Capital: " << std::fixed << std::setprecision(2) << endingCapital << std::endl;
+    std::cout << "Total Profit: " << std::fixed << std::setprecision(2) << totalProfit << std::endl;
+}
+
+void BacktestModule::addData(const std::vector<StockData> &data) {
+    this->data = data;
+
+}
+
+void BacktestModule::run() {
+    this->backtest();
+
+}
+
+void BacktestModule::setCommissionPercentage(double CommissionPercentage) {
+    this->commissionPercentage = CommissionPercentage;
+
+}
+
+void BacktestModule::setInitCash(double InitCash) {
+    this->initCash = InitCash;
 }

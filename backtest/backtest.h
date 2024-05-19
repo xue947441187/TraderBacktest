@@ -13,11 +13,23 @@
 class BacktestModule {
 public:
     // 执行回测
-    void backtest(const std::vector<StockData>& data);
 
-    void calculateProfitAndPrintResult(double initialCapital, const TradingModule &tradingModule);
+    void run();
+    void calculateProfitAndPrintResult(const TradingModule &tradingModule);
+    void setCommissionPercentage(double commissionPercentage);
+    void setInitCash(double InitCash);
+    void addData(const std::vector<StockData> &data);
 private:
     double endingCapital;
+    double commissionPercentage;
+    double initCash;
+
+    std::vector<StockData> data;
+    void backtest();
+
+    void executeBuy(TradingModule &tradingModule, const StockData &stock, double &capital, double &totalCommission,double &commission);
+
+    void executeSell(TradingModule &tradingModule, const StockData &stock, double &capital, double &totalCommission,double &commission);
 };
 
 #endif //TRADERBACKTEST_BACKTEST_H
