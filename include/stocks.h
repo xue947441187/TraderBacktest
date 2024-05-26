@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 struct StockData {
     std::string date;
@@ -18,9 +19,10 @@ struct StockData {
     double low;
     double close;
     double volume;
+    std::unordered_map<std::string, double> indicators; // Custom indicators
+
     // You can add more fields according to your data format
 };
 
 std::vector<StockData> readStockData(const std::string& filename);
-
 #endif //TRADERBACKTEST_STOCKS_H

@@ -3,7 +3,7 @@
 //
 
 #include <iomanip>
-#include "backtest.h"
+#include "../include/backtest.h"
 
 void BacktestModule::backtest() {
     TradingModule tradingModule(this->commissionPercentage);
@@ -24,9 +24,9 @@ void BacktestModule::backtest() {
         for (int j = std::max(0, i - windowSize + 1); j <= i; ++j) {
             prices.push_back(data[j].close);
         }
-        std::vector<double> movingAverage = Indicator::MA(prices, windowSize);
-        double currentMA = movingAverage.back();
-
+//        std::vector<double> movingAverage = Indicator::SMA(prices, windowSize);
+//        double currentMA = movingAverage.back();
+        double currentMA = 0.0;
         // 根据移动平均线位置执行交易
         if (!holdingStock && stock.close > currentMA) {
             // 计算手续费

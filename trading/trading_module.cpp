@@ -2,7 +2,7 @@
 // Created by 薛新岗 on 2024/5/15.
 //
 
-#include "trading_module.h"
+#include "../include/trading_module.h"
 #include <iostream>
 
 void TradingModule::executeTrade(const std::string& date, const std::string& symbol, double price, int quantity) {

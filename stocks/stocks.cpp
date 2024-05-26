@@ -2,11 +2,7 @@
 // Created by 薛新岗 on 2024/5/15.
 //
 
-#include "stocks.h"
-
-
-
-
+#include "../include/stocks.h"
 
 std::vector<StockData> readStockData(const std::string& filename) {
     std::vector<StockData> stockData;
@@ -19,6 +15,8 @@ std::vector<StockData> readStockData(const std::string& filename) {
 
     std::string line;
     std::getline(file, line); // Skip header if exists
+
+
 
     while (std::getline(file, line)) {
         StockData data;

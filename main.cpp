@@ -2,17 +2,41 @@
 // Created by 薛新岗 on 2024/5/15.
 //
 #include "library.h"
-#include "trading/trading_module.h"
-#include "backtest/backtest.h"
-
+#include "include/trading_module.h"
+//#include "include/backtest.h"
+#include "include/stocks.h"
+#include "include/indicators.h"
 int main() {
     std::vector<StockData> data = readStockData("AAPL.csv");
-    BacktestModule backtestModule;
-    // 执行回测
-    backtestModule.setInitCash(100000);
-    backtestModule.setCommissionPercentage(0.001);
-    backtestModule.addData(data);
-    backtestModule.run();
+    Indicator indicator;
+    indicator.SMA(data, 20); // Calculate 20-period SMA
+
+    for (const auto& entry : data) {
+        std::cout << "Date: " << entry.date
+                  << ", Symbol: " << entry.symbol
+                  << ", Open: " << entry.open
+                  << ", High: " << entry.high
+                  << ", Low: " << entry.low
+                  << ", Close: " << entry.close
+                  << ", Volume: " << entry.volume
+                  << std::endl;
+        for (const auto& indicators : entry.indicators) {
+            std::cout << indicators.first << ": " << indicators.second << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
+//    std::vector<double> prices(data.size());
+//    std::transform(data.begin(), data.end(), prices.begin(),
+//                   [](const StockData& stock) { return stock.close; });
+
+//    BacktestModule backtestModule;
+//    // 执行回测
+//    backtestModule.setInitCash(100000);
+//    backtestModule.setCommissionPercentage(0.001);
+//    backtestModule.addData(data);
+//    backtestModule.run();
 
 
     return 0;

@@ -6,9 +6,9 @@
 #define TRADERBACKTEST_BACKTEST_H
 
 #include <vector>
-#include "../trading/trading_module.h" // 引入交易模块的头文件
-#include "../stocks/stocks.h" // 引入交易模块的头文件
-#include "../indicators/indicators.h"
+#include "trading_module.h" // 引入交易模块的头文件
+#include "stocks.h" // 引入交易模块的头文件
+#include "indicators.h"
 
 class BacktestModule {
 public:
