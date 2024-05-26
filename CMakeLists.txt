@@ -35,12 +35,15 @@ target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
 # 链接TALib库到TraderBacktestLib
 target_link_libraries(TraderBacktestLib ta_lib)
 
-# 添加主可执行文件
-#add_executable(TraderBacktest examples/main.cpp)
-
-# 链接TraderBacktestLib到主可执行文件
-#target_link_libraries(TraderBacktest TraderBacktestLib)
 # 添加数据文件到输出目录
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/aapl.csv ${CMAKE_CURRENT_BINARY_DIR}/aapl.csv COPYONLY)
 
+# 将 ta-lib.dll 复制到可执行文件的输出目录
+add_custom_command(TARGET TraderBacktestLib POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:ta_lib>
+        $<TARGET_FILE_DIR:TraderBacktestLib>
+)
+
+# 添加examples子目录
 add_subdirectory(examples)

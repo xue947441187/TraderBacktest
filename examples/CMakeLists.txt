@@ -16,3 +16,10 @@ target_link_libraries(test TraderBacktestLib)
 
 # 设置包含目录，包括主项目库的包含目录
 target_include_directories(test PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
+
+# 将 ta-lib.dll 复制到可执行文件的输出目录
+add_custom_command(TARGET test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:ta_lib>
+        $<TARGET_FILE_DIR:test>
+)
