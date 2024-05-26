@@ -9,15 +9,6 @@
 #include "ta_libc.h"
 #include "stocks.h"
 
-// 定义技术指标结构
-struct TechnicalIndicator {
-    std::string name;           // 技术指标名称
-    int period;                 // 技术指标的周期
-    double value; // 存储技术指标的值
-    std::string date;
-
-};
-
 
 class Indicator {
 public:
