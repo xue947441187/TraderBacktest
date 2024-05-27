@@ -3,6 +3,7 @@
 //
 
 #include <iomanip>
+#include <limits>
 #include "../include/backtest.h"
 
 void BacktestModule::backtest() {
@@ -10,23 +11,14 @@ void BacktestModule::backtest() {
 
     bool holdingStock = false;
 
-    // 计算移动平均的窗口大小
-    int windowSize = 10;
 
     double capital = this->initCash; // 初始资本
     double totalCommission = 0.0; // 总手续费
 
     for (int i = 0; i < data.size(); ++i) {
-        const auto& stock = data[i];
+        const StockData stock = data[i];
 
-        // 计算移动平均
-        std::vector<double> prices;
-        for (int j = std::max(0, i - windowSize + 1); j <= i; ++j) {
-            prices.push_back(data[j].close);
-        }
-//        std::vector<double> movingAverage = Indicator::SMA(prices, windowSize);
-//        double currentMA = movingAverage.back();
-        double currentMA = 0.0;
+        double currentMA = getIndicator(stock,"MACD");
         // 根据移动平均线位置执行交易
         if (!holdingStock && stock.close > currentMA) {
             // 计算手续费
@@ -116,4 +108,21 @@ void BacktestModule::setCommissionPercentage(double CommissionPercentage) {
 
 void BacktestModule::setInitCash(double InitCash) {
     this->initCash = InitCash;
+}
+
+void BacktestModule::setEntryMode(const std::string& mode) {
+    this->entryMode = mode;
+}
+
+void BacktestModule::setExitMode(const std::string& mode) {
+    this->exitMode = mode;
+}
+
+double getIndicator(const StockData& stock, const std::string& indicatorName) {
+    auto it = stock.indicators.find(indicatorName);
+    if (it != stock.indicators.end()) {
+        return it->second;
+    } else {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
 }

@@ -13,6 +13,7 @@
 class Indicator {
 public:
     void SMA(std::vector<StockData>& data, int period);
+    void MACD(std::vector<StockData>& data, int fastPeriod, int slowPeriod, int signalPeriod);
 
 };
 
