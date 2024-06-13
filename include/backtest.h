@@ -20,6 +20,8 @@ public:
     void addData(const std::vector<StockData> &data);
     void setEntryMode(const std::string& mode);
     void setExitMode(const std::string& mode);
+    void setEntryType(const std::string& type);
+    void setExitType(const std::string& type);
 
 private:
     double endingCapital;
@@ -27,13 +29,25 @@ private:
     double initCash;
     std::string entryMode = "close";
     std::string exitMode = "close";
+    std::string currentMode;
+    std::string entryType;
+    std::string exitType;
 
     std::vector<StockData> data;
+
+    void setCurrentMode(const std::string& mode);
     void backtest();
 
     void executeBuy(TradingModule &tradingModule, const StockData &stock, double &capital, double &totalCommission,double &commission);
 
     void executeSell(TradingModule &tradingModule, const StockData &stock, double &capital, double &totalCommission,double &commission);
+
+    bool
+    checkTradingConditions(const StockData &previous, const StockData &current, const std::string &indicator,
+                           double value,
+                           const std::string &conditionType);
+
+
 };
 
 

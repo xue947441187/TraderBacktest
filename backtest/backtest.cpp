@@ -14,23 +14,34 @@ void BacktestModule::backtest() {
 
     double capital = this->initCash; // 初始资本
     double totalCommission = 0.0; // 总手续费
-
+    StockData previous;
+    StockData current;
+    this->setCurrentMode(this->entryMode);
     for (int i = 0; i < data.size(); ++i) {
-        const StockData stock = data[i];
+        current = data[i];
+        double currentMA = getIndicator(current,this->currentMode);
+        if (i<=1){
+            continue;
+        }else if (std::isnan(currentMA) || std::isnan(getIndicator(data[i-1],this->currentMode))){
+            continue;
+        }
+        previous = data[i-1];
 
-        double currentMA = getIndicator(stock,"MACD");
+        if (holdingStock)
+            this->setCurrentMode(this->exitMode);
+        else
+            this->setCurrentMode(this->entryMode);
+
         // 根据移动平均线位置执行交易
-        if (!holdingStock && stock.close > currentMA) {
+        if (!holdingStock && this->checkTradingConditions(previous,current,this->currentMode,0.3,"goldenCross")) {
             // 计算手续费
-            double commission = commissionPercentage * stock.close * capital / stock.close;
-
-            executeBuy(tradingModule, stock, capital, totalCommission,commission);
+            double commission = commissionPercentage * current.close * capital / current.close;
+            executeBuy(tradingModule, current, capital, totalCommission,commission);
             holdingStock = true;
-        } else if (holdingStock && stock.close < currentMA) {
+        } else if (holdingStock && this->checkTradingConditions(previous,current,this->currentMode,0.7,"deathCross")) {
             // 计算手续费
             double commission = 0;
-
-            executeSell(tradingModule, stock, capital, totalCommission,commission);
+            executeSell(tradingModule, current, capital, totalCommission,commission);
             holdingStock = false;
         }
     }
@@ -38,6 +49,25 @@ void BacktestModule::backtest() {
     // 计算收益并打印结果
     calculateProfitAndPrintResult(tradingModule);
 }
+
+bool BacktestModule::checkTradingConditions(const StockData& previous, const StockData& current, const std::string& indicator, double value, const std::string& conditionType) {
+    if (conditionType == "greaterThan") {
+        return current.indicators.at(indicator) > value;
+    } else if (conditionType == "lessThan") {
+        return current.indicators.at(indicator) < value;
+    } else if (conditionType == "equalTo") {
+        return current.indicators.at(indicator) == value;
+    } else if (conditionType == "goldenCross") {
+        return previous.indicators.at(indicator) <= current.indicators.at(this->currentMode);
+//               current.indicators.at(indicator) > current.indicators.at("MACDSignal");
+    } else if (conditionType == "deathCross") {
+        return previous.indicators.at(indicator) >= current.indicators.at(this->currentMode);
+//               current.indicators.at(indicator) < current.indicators.at(this->currentMode);
+    } else {
+        throw std::invalid_argument("Invalid condition type");
+    }
+}
+
 
 void BacktestModule::executeBuy(TradingModule& tradingModule, const StockData& stock, double& capital, double& totalCommission,double &commission) {
 
@@ -52,6 +82,7 @@ void BacktestModule::executeBuy(TradingModule& tradingModule, const StockData& s
     // 更新资本和总手续费
     capital -= (stock.close * quantity);
     totalCommission += commission;
+    std::cout << stock.date << "Buy-> quantity: " << quantity <<"," <<"close: " << stock.close << std::endl;
 }
 
 void BacktestModule::executeSell(TradingModule& tradingModule, const StockData& stock, double& capital, double& totalCommission,double &commission) {
@@ -67,6 +98,7 @@ void BacktestModule::executeSell(TradingModule& tradingModule, const StockData& 
     // 更新资本和总手续费
     capital += (stock.close * quantity);
     totalCommission += commission;
+    std::cout << stock.date << "sell-> quantity: " << quantity <<"," <<"close: " << stock.close << std::endl;
 }
 
 
@@ -117,6 +149,19 @@ void BacktestModule::setEntryMode(const std::string& mode) {
 void BacktestModule::setExitMode(const std::string& mode) {
     this->exitMode = mode;
 }
+
+void BacktestModule::setCurrentMode(const std::string &mode) {
+    this->currentMode = mode;
+}
+
+void BacktestModule::setEntryType(const std::string &type) {
+this->entryType = type;
+}
+
+void BacktestModule::setExitType(const std::string &type) {
+    this->exitType = type;
+}
+
 
 double getIndicator(const StockData& stock, const std::string& indicatorName) {
     auto it = stock.indicators.find(indicatorName);
