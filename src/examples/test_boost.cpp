@@ -2,50 +2,58 @@
 // Created by 94744 on 2024/9/8.
 //
 // test_boost.cpp
-#include <boost/filesystem.hpp>
 #include <iostream>
-#include <fstream>  // 必须包含这个头文件
+#include <boost/asio.hpp>
+#include <boost/regex.hpp>
+#include <boost/shared_ptr.hpp>
+
+using namespace boost;
+using namespace boost::asio;
+
+// 测试 boost::asio
+void test_asio() {
+    io_context io;
+
+    // 创建一个定时器
+    steady_timer timer(io, std::chrono::seconds(1));
+    timer.async_wait([](const boost::system::error_code& error) {
+        if (!error) {
+            std::cout << "Timer expired!" << std::endl;
+        }
+    });
+
+    io.run();
+}
+
+// 测试 boost::regex
+void test_regex() {
+    std::string text = "Boost 1.80.0";
+    regex expr("\\d+\\.\\d+\\.\\d+");
+    smatch matches;
+
+    if (regex_search(text, matches, expr)) {
+        std::cout << "Version found: " << matches[0] << std::endl;
+    } else {
+        std::cout << "No version found" << std::endl;
+    }
+}
+
+// 测试 boost::shared_ptr
+void test_shared_ptr() {
+    shared_ptr<int> p1(new int(42));
+    std::cout << "Value: " << *p1 << std::endl;
+
+    // 创建另一个 shared_ptr 共享同一个对象
+    shared_ptr<int> p2 = p1;
+    std::cout << "Shared value: " << *p2 << std::endl;
+}
 
 int main() {
-    namespace fs = boost::filesystem;  // 为 Boost.Filesystem 命名空间创建别名
+    std::cout << "Testing Boost library functions..." << std::endl;
 
-
-    try {
-        // 创建一个测试目录
-        fs::path test_dir("test_boost_directory");
-        if (fs::create_directory(test_dir)) {
-            std::cout << "目录创建成功。" << std::endl;
-
-            // 创建一个测试文件
-            fs::path test_file = test_dir / "test_file.txt";
-            std::ofstream ofs(test_file.string());  // 确保包含 <fstream>
-            if (ofs) {
-                ofs << "Boost 工作正常！";
-                std::cout << "文件创建并写入成功。" << std::endl;
-            } else {
-                std::cerr << "文件创建失败。" << std::endl;
-                return 1;
-            }
-
-            // 删除文件
-            fs::remove(test_file);
-            std::cout << "文件删除成功。" << std::endl;
-
-            // 删除目录
-            fs::remove(test_dir);
-            std::cout << "目录删除成功。" << std::endl;
-        } else {
-            std::cerr << "目录创建失败。" << std::endl;
-            return 1;
-        }
-
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "文件系统错误: " << e.what() << std::endl;
-        return 1;
-    } catch (const std::exception& e) {
-        std::cerr << "标准异常: " << e.what() << std::endl;
-        return 1;
-    }
+    test_asio();
+    test_regex();
+    test_shared_ptr();
 
     return 0;
 }
