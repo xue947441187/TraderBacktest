@@ -3,4 +3,4 @@
 	url = git@github.com:xue947441187/ta-lib.git
 [submodule "external/boost"]
 	path = external/boost
-	url = git@github.com:xue947441187/boost.git
+	url = git@github.com:boostorg/boost.git
