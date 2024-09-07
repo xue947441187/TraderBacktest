@@ -10,6 +10,13 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <cstdlib>
+
+
 
 struct StockData {
     std::string date;

@@ -8,23 +8,124 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# 设置examples目录
+set(EXAMPLES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/examples)
+
+
+
+# 设置 Boost 源代码路径和安装路径
+set(BOOST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/boost)  # Boost 源码路径
+set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost)  # 安装路径
+
+# 设置 Boost 环境
+set(BOOST_BUILD_OPTIONS_DEBUG "link=static variant=debug address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
+set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
+
+# 构建 Boost
+message(STATUS "Building Boost...")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # Windows 环境下的 b2 命令
+    set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_RELEASE}")
+    set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_DEBUG}")
+
+    # 创建 Release 构建的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_INSTALL_DIR}/lib/release
+            COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building Boost for Release"
+            VERBATIM
+    )
+
+    # 创建 Debug 构建的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
+            COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building Boost for Debug"
+            VERBATIM
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # macOS 和 Linux 环境下的 b2 命令
+    set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_RELEASE}")
+    set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_DEBUG}")
+
+    # 创建 Release 构建的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_INSTALL_DIR}/lib/release
+            COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building Boost for Release"
+            VERBATIM
+    )
+
+    # 创建 Debug 构建的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
+            COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building Boost for Debug"
+            VERBATIM
+    )
+else()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+
+# 添加自定义目标以确保 Boost 被构建
+add_custom_target(build_boost_release ALL
+        DEPENDS ${BOOST_INSTALL_DIR}/lib/release
+)
+
+add_custom_target(build_boost_debug ALL
+        DEPENDS ${BOOST_INSTALL_DIR}/lib/debug
+)
+
+# 添加构建 Boost 的目标
+add_custom_target(build_boost ALL
+        DEPENDS build_boost_release build_boost_debug
+)
+
+message(STATUS "Boost setup finished.")
+
+
+
+
+# 检查 Boost 是否已经构建
+if(NOT EXISTS ${BOOST_INSTALL_DIR}/lib)
+    message(STATUS "Boost not found, building Boost...")
+else()
+    message(STATUS "Boost found at ${BOOST_INSTALL_DIR}")
+    # 设置 Boost 环境
+    set(BOOST_ROOT ${BOOST_INSTALL_DIR})
+    set(Boost_INCLUDE_DIR ${BOOST_INSTALL_DIR}/include)
+    set(Boost_LIBRARY_DIR ${BOOST_INSTALL_DIR}/lib)
+
+    # 查找 Boost 库
+    find_package(Boost REQUIRED COMPONENTS system filesystem)
+
+    # 添加 Boost 头文件目录
+    include_directories(${Boost_INCLUDE_DIR})
+
+    # 设置 Boost 的库目录
+    link_directories(${Boost_LIBRARY_DIR})
+
+endif()
+
 # 设置TALib子模块路径
 set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/ta-lib)
 
-# 添加TALib的子目录
+# 添加 TA-Lib 子目录
 add_subdirectory(${TA_LIB_DIR} ${CMAKE_BINARY_DIR}/ta-lib)
+
 # 添加头文件目录
 include_directories(${TA_LIB_DIR}/include)
 
+# 添加项目文件目录
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
 # 自动匹配源文件和头文件
-file(GLOB_RECURSE TRADERBACKTEST_SRC
-        "library.cpp"
-        "trading/*.cpp"
-        "backtest/*.cpp"
-        "indicators/*.cpp"
-        "stocks/*.cpp"
-        "include/*.h"
-)
+file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 # 添加库
 add_library(TraderBacktestLib ${TRADERBACKTEST_SRC})
@@ -32,18 +133,11 @@ add_library(TraderBacktestLib ${TRADERBACKTEST_SRC})
 # 添加包含目录
 target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
 
-# 链接TALib库到TraderBacktestLib
-target_link_libraries(TraderBacktestLib ta_lib)
+# 链接 TA-Lib 库到 TraderBacktestLib
+target_link_libraries(TraderBacktestLib ta_lib ${Boost_LIBRARIES})
 
 # 添加数据文件到输出目录
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/aapl.csv ${CMAKE_CURRENT_BINARY_DIR}/examples/aapl.csv COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/aapl.csv ${EXAMPLES_DIR}/aapl.csv COPYONLY)
 
-# 将 ta-lib.dll 复制到可执行文件的输出目录
-add_custom_command(TARGET TraderBacktestLib POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:ta_lib>
-        $<TARGET_FILE_DIR:TraderBacktestLib>
-)
-
-# 添加examples子目录
-add_subdirectory(examples)
+# 添加 examples 子目录
+add_subdirectory(${EXAMPLES_DIR})
