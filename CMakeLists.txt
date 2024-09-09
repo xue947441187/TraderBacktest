@@ -18,16 +18,27 @@ set(BOOST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/boost)  # Boost 源码路
 set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost)  # 安装路径
 
 # 设置 Boost 环境
-set(BOOST_BUILD_OPTIONS_DEBUG "link=static variant=debug address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
-set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
+set(BOOST_BUILD_OPTIONS_DEBUG "link=static variant=debug  install --prefix=${BOOST_INSTALL_DIR} --without-python")
+set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release install --prefix=${BOOST_INSTALL_DIR} --without-python")
 
 # 构建 Boost
 message(STATUS "Building Boost...")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(BOOST_BOOTSTRAP_CMD "${BOOST_SRC_DIR}/bootstrap.bat")
     # Windows 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_DEBUG}")
+
+    # 创建 bootstrap 的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_SRC_DIR}/b2.exe
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running Boost bootstrap.bat"
+            COMMAND ${BOOST_BOOTSTRAP_CMD}
+            WORKING_DIRECTORY ${BOOST_SRC_DIR}
+            COMMENT "Bootstrapping Boost for Windows"
+            VERBATIM
+    )
 
     # 创建 Release 构建的自定义命令
     add_custom_command(
@@ -47,6 +58,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
             VERBATIM
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(BOOST_BOOTSTRAP_CMD "${BOOST_SRC_DIR}/bootstrap.sh")
+    # 创建 bootstrap 的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_SRC_DIR}/b2
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running Boost bootstrap.sh"
+            COMMAND bash ${BOOST_BOOTSTRAP_CMD}
+            WORKING_DIRECTORY ${BOOST_SRC_DIR}
+            COMMENT "Bootstrapping Boost for macOS/Linux"
+            VERBATIM
+    )
     # macOS 和 Linux 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_DEBUG}")
