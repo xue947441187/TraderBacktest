@@ -6,11 +6,10 @@
 #include "backtest.h"
 #include "stocks.h"
 #include "indicators.h"
-
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::vector<StockData> data = readStockData("AAPL.csv");
+    std::vector<StockData> data = readStockData("aapl.csv");
     Indicator indicator;
     indicator.SMA(data, 20); // Calculate 20-period SMA
     indicator.MACD(data,5,12,21);

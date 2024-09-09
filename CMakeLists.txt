@@ -7,7 +7,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-
+message(STATUS "Runtime output directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 # 设置examples目录
 set(EXAMPLES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/examples)
 
@@ -137,7 +137,7 @@ target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
 target_link_libraries(TraderBacktestLib ta_lib ${Boost_LIBRARIES})
 
 # 添加数据文件到输出目录
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/aapl.csv ${EXAMPLES_DIR}/aapl.csv COPYONLY)
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AAPL.csv src/examples/aapl.csv COPYONLY)
 
 # 添加 examples 子目录
 add_subdirectory(${EXAMPLES_DIR})
