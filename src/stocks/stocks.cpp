@@ -43,38 +43,3 @@ std::vector<StockData> readStockData(const std::string& filename) {
     file.close();
     return stockData;
 }
-//
-//template <typename _index, typename _value>
-//ItemContainer<_index, _value>
-//IndexComparableItem<_index, _value>::query(const std::function<bool(const _key &)> &condition) const {
-//    ItemContainer<_index, _value> result;
-//
-//    // 获取索引视图
-//    auto& index_view = this->_line->get<index_tag>();
-//    for (const auto& item : index_view) {
-//        if (condition(item.index)) {
-//            result.insert(item);  // 插入整个 Item 对象
-//        }
-//    }
-//
-//    return result;
-//}
-//
-//template <typename _index, typename _value>
-//ItemContainer<_index, _value>
-//ValueComparableItem<_index, _value>::query(const std::function<bool(const _key &)> &condition) const {
-//
-//    ItemContainer<_index, _value> result;
-//
-//    // 获取索引视图
-//    auto& index_view = this->_line->get<index_tag>();
-//    for (const auto& item : index_view) {
-//        if (condition(item.index)) {
-//            result.insert(item);  // 插入整个 Item 对象
-//        }
-//    }
-//
-//    return result;
-//}
-
-

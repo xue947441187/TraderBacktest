@@ -28,7 +28,9 @@ else()
 endif ()
 
 # 设置 TA-Lib 环境
-set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/path/to/ta-lib)  # 替换为实际的 TA-Lib 路径
+set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/ta-lib)  # 替换为实际的 TA-Lib 路径
+# 设置 yaml-cpp环境
+set(YAML_CPP ${CMAKE_CURRENT_SOURCE_DIR}/external/yaml-cpp)
 
 # 查找所有的 .cpp 文件
 file(GLOB_RECURSE CPP_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -46,15 +48,17 @@ foreach(CPP_FILE ${CPP_FILES})
     add_executable(${FILE_NAME} ${CPP_FILE})
 
     # 链接 TraderBacktestLib 库到每个可执行程序
-    target_link_libraries(${FILE_NAME} TraderBacktestLib ${Boost_LIBRARIES} ta_lib)
+    target_link_libraries(${FILE_NAME} TraderBacktestLib ${Boost_LIBRARIES} ta_lib yaml-cpp )
 
     # 设置包含目录
-    target_include_directories(${FILE_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS} ${TA_LIB_DIR}/include)
+    target_include_directories(${FILE_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include
+            ${Boost_INCLUDE_DIRS} ${TA_LIB_DIR}/include ${YAML_CPP}/include)
 
     # 将 ta-lib.dll 复制到每个可执行文件的输出目录
     add_custom_command(TARGET ${FILE_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:ta_lib>
+            $<TARGET_FILE:yaml-cpp>
             $<TARGET_FILE_DIR:${FILE_NAME}>
     )
 endforeach()

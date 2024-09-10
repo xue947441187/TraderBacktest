@@ -133,29 +133,42 @@ else()
 
 endif()
 
+# 设置yaml-cpp
+set(YAML_CPP ${CMAKE_CURRENT_SOURCE_DIR}/external/yaml-cpp)
+add_subdirectory(${YAML_CPP} ${CMAKE_BINARY_DIR}/yaml-cpp)
+include_directories(${YAML_CPP}/include)
+
 # 设置TALib子模块路径
 set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/ta-lib)
-
 # 添加 TA-Lib 子目录
 add_subdirectory(${TA_LIB_DIR} ${CMAKE_BINARY_DIR}/ta-lib)
-
 # 添加头文件目录
 include_directories(${TA_LIB_DIR}/include)
+
 
 # 添加项目文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # 自动匹配源文件和头文件
-file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp" )
+# 添加 YAML 文件
+file(GLOB_RECURSE YAML_FILES "${PROJECT_SOURCE_DIR}/src/*.yaml")
 
 # 添加库
 add_library(TraderBacktestLib ${TRADERBACKTEST_SRC})
 
 # 添加包含目录
 target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
+target_include_directories(TraderBacktestLib PRIVATE ${YAML_CPP}/include)
+
+foreach(YAML_FILE ${YAML_FILES})
+    get_filename_component(FILENAME ${YAML_FILE} NAME)
+    configure_file(${YAML_FILE} ${CMAKE_BINARY_DIR}/src/config/${FILENAME} COPYONLY)
+endforeach()
+
 
 # 链接 TA-Lib 库到 TraderBacktestLib
-target_link_libraries(TraderBacktestLib ta_lib ${Boost_LIBRARIES})
+target_link_libraries(TraderBacktestLib ta_lib yaml-cpp ${Boost_LIBRARIES})
 
 # 添加数据文件到输出目录
 # configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AAPL.csv src/examples/aapl.csv COPYONLY)

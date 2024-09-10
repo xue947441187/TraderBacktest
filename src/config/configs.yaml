@@ -1,0 +1,4 @@
+types:
+  - int
+  - double
+  - std::string
