@@ -3,6 +3,7 @@
 //
 
 #include "stocks.h"
+#include "boost/tokenizer.hpp"
 
 std::vector<StockData> readStockData(const std::string& filename) {
     std::vector<StockData> stockData;
@@ -16,31 +17,25 @@ std::vector<StockData> readStockData(const std::string& filename) {
     std::string line;
     std::getline(file, line); // Skip header if exists
 
-
-
+    // Using boost::tokenizer with comma as the delimiter
+    typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
     while (std::getline(file, line)) {
+        Tokenizer tok(line);
+        std::vector<std::string> tokens(tok.begin(), tok.end());
+
+        // Ensure we have exactly 6 columns in the CSV row
+        if (tokens.size() != 6) {
+            std::cerr << "Error: Invalid line format in file: " << line << std::endl;
+            continue;
+        }
+
         StockData data;
-        std::istringstream iss(line);
-        std::string token;
-
-        // Assuming CSV format: Date,Open,High,Low,Close,Volume
-        std::getline(iss, token, ',');
-        data.date = token;
-
-        std::getline(iss, token, ',');
-        data.open = std::stod(token);
-
-        std::getline(iss, token, ',');
-        data.high = std::stod(token);
-
-        std::getline(iss, token, ',');
-        data.low = std::stod(token);
-
-        std::getline(iss, token, ',');
-        data.close = std::stod(token);
-
-        std::getline(iss, token, ',');
-        data.volume = std::stod(token);
+        data.date = tokens[0];
+        data.open = std::stod(tokens[1]);
+        data.high = std::stod(tokens[2]);
+        data.low = std::stod(tokens[3]);
+        data.close = std::stod(tokens[4]);
+        data.volume = std::stod(tokens[5]);
 
         stockData.push_back(data);
     }
@@ -48,3 +43,38 @@ std::vector<StockData> readStockData(const std::string& filename) {
     file.close();
     return stockData;
 }
+//
+//template <typename _index, typename _value>
+//ItemContainer<_index, _value>
+//IndexComparableItem<_index, _value>::query(const std::function<bool(const _key &)> &condition) const {
+//    ItemContainer<_index, _value> result;
+//
+//    // 获取索引视图
+//    auto& index_view = this->_line->get<index_tag>();
+//    for (const auto& item : index_view) {
+//        if (condition(item.index)) {
+//            result.insert(item);  // 插入整个 Item 对象
+//        }
+//    }
+//
+//    return result;
+//}
+//
+//template <typename _index, typename _value>
+//ItemContainer<_index, _value>
+//ValueComparableItem<_index, _value>::query(const std::function<bool(const _key &)> &condition) const {
+//
+//    ItemContainer<_index, _value> result;
+//
+//    // 获取索引视图
+//    auto& index_view = this->_line->get<index_tag>();
+//    for (const auto& item : index_view) {
+//        if (condition(item.index)) {
+//            result.insert(item);  // 插入整个 Item 对象
+//        }
+//    }
+//
+//    return result;
+//}
+
+

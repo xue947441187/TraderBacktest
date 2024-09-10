@@ -33,6 +33,10 @@ set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/path/to/ta-lib)  # 替换为实际的
 # 查找所有的 .cpp 文件
 file(GLOB_RECURSE CPP_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
+# 添加数据文件到输出目录
+configure_file(AAPL.csv aapl.csv COPYONLY)
+
+
 # 为每个 .cpp 文件创建一个可执行程序
 foreach(CPP_FILE ${CPP_FILES})
     # 获取文件名（不包括路径和扩展名）
