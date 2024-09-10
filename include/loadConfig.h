@@ -9,6 +9,9 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 
+
+
+//// 暂时先不使用这个
 // 定义 loadConfig 类
 class loadConfig {
 private:
@@ -29,7 +32,9 @@ public:
         static loadConfig instance(filename); // 唯一实例
         return instance;
     }
-
+    YAML::Node getTypesConfig() const{
+        return config["types"];
+    }
     // 获取配置节点
     YAML::Node getConfig() const {
         return config;

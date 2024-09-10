@@ -1,4 +1,5 @@
-types:
-  - int
-  - double
-  - std::string
+line_types:
+  - index_type: int
+    value_type: std::string
+  - index_type: std::string
+    value_type: double
