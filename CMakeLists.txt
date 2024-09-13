@@ -11,8 +11,6 @@ message(STATUS "Runtime output directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 # 设置examples目录
 set(EXAMPLES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/examples)
 
-
-
 # 设置 Boost 源代码路径和安装路径
 set(BOOST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/boost)  # Boost 源码路径
 set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost)  # 安装路径
@@ -24,50 +22,78 @@ set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release address-model=64 in
 # 构建 Boost
 message(STATUS "Building Boost...")
 
+# 检查是否已经存在构建结果
+function(check_file_exists file_path)
+    if(EXISTS ${file_path})
+        message(STATUS "File ${file_path} already exists. Skipping build.")
+        set(RESULT TRUE PARENT_SCOPE)
+    else()
+        set(RESULT FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Windows 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_DEBUG}")
 
-    # 创建 Release 构建的自定义命令
-    add_custom_command(
-            OUTPUT ${BOOST_INSTALL_DIR}/lib/release
-            COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Building Boost for Release"
-            VERBATIM
-    )
+    # 检查 Release 构建文件是否存在
+    check_file_exists(${BOOST_INSTALL_DIR}/lib/release)
+    if(NOT RESULT)
+        # 创建 Release 构建的自定义命令
+        add_custom_command(
+                OUTPUT ${BOOST_INSTALL_DIR}/lib/release
+                COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Building Boost for Release"
+                VERBATIM
+        )
+    endif()
 
-    # 创建 Debug 构建的自定义命令
-    add_custom_command(
-            OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
-            COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Building Boost for Debug"
-            VERBATIM
-    )
+    # 检查 Debug 构建文件是否存在
+    check_file_exists(${BOOST_INSTALL_DIR}/lib/debug)
+    if(NOT RESULT)
+        # 创建 Debug 构建的自定义命令
+        add_custom_command(
+                OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
+                COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Building Boost for Debug"
+                VERBATIM
+        )
+    endif()
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     # macOS 和 Linux 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_DEBUG}")
 
-    # 创建 Release 构建的自定义命令
-    add_custom_command(
-            OUTPUT ${BOOST_INSTALL_DIR}/lib/release
-            COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Building Boost for Release"
-            VERBATIM
-    )
+    # 检查 Release 构建文件是否存在
+    check_file_exists(${BOOST_INSTALL_DIR}/lib/release)
+    if(NOT RESULT)
+        # 创建 Release 构建的自定义命令
+        add_custom_command(
+                OUTPUT ${BOOST_INSTALL_DIR}/lib/release
+                COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Building Boost for Release"
+                VERBATIM
+        )
+    endif()
 
-    # 创建 Debug 构建的自定义命令
-    add_custom_command(
-            OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
-            COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Building Boost for Debug"
-            VERBATIM
-    )
+    # 检查 Debug 构建文件是否存在
+    check_file_exists(${BOOST_INSTALL_DIR}/lib/debug)
+    if(NOT RESULT)
+        # 创建 Debug 构建的自定义命令
+        add_custom_command(
+                OUTPUT ${BOOST_INSTALL_DIR}/lib/debug
+                COMMAND bash -c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_DEBUG}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Building Boost for Debug"
+                VERBATIM
+        )
+    endif()
+
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -131,7 +157,7 @@ file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp")
 add_library(TraderBacktestLib ${TRADERBACKTEST_SRC})
 
 # 添加包含目录
-target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
+target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include ${Boost_INCLUDE_DIR})
 
 # 链接 TA-Lib 库到 TraderBacktestLib
 target_link_libraries(TraderBacktestLib ta_lib ${Boost_LIBRARIES})

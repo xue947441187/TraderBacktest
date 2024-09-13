@@ -6,8 +6,12 @@
 #define TRADERBACKTEST_STOCKS_H
 #include <iostream>
 #include <unordered_map>
-
+#include <boost/variant.hpp>
+#include <iomanip>
 #include <fstream>
+#include "mObserver.h"
+#include "line/line.h"
+
 struct StockData {
     std::string date;
     std::string symbol;
@@ -20,97 +24,94 @@ struct StockData {
     // You can add more fields according to your data format
 };
 
-#include "item.h"
-#include "ComparableItem.h"
-#include "IndexComparableItem.h"
-#include "ValueComparableItem.h"
 
-// Line 类模板
-template <typename _index, typename _value>
-class Line {
-private:
-    boost::shared_ptr<ItemContainer<_index, _value>> _line;
-    boost::shared_ptr<IndexComparableItem<_index,_value,_index>> index;
-    boost::shared_ptr<ValueComparableItem<_index,_value,_value>> value;
 
+
+
+
+
+
+using LineIntDouble =boost::shared_ptr<Line<int,double>> ;
+using LineIntString = boost::shared_ptr<Line<int,std::string>>;
+using LineStringDouble=boost::shared_ptr<Line<std::string,double>>;
+
+using LineVariant = boost::variant<LineIntString,LineIntDouble,LineStringDouble>;
+
+class LineManager {
 public:
-    Line(){
-        _line = boost::make_shared<ItemContainer<_index, _value>>();
-        index = IndexComparableItem<_index,_value,_index>::createComparableItem(this->_line);
-        value = ValueComparableItem<_index,_value,_value>::createComparableItem(this->_line);
+    static std::unique_ptr<LineManager> create() {
+        return std::unique_ptr<LineManager>(new LineManager());
     }
 
-    // 设置参数
-    void setParam(const _index& idx, const _value& val) {
-        auto& index_view = _line->get<index_tag>();
-        auto it = index_view.find(idx);
-        if (it != index_view.end()) {
-            // 如果 index 存在，则更新
-            index_view.modify(it, [&](Item<_index, _value>& item) {
-                item.value = val;
-            });
-        }
-        else {
-            // 否则，插入新的项
-            _line->insert({ idx, val });
-        }
+    // 初始化 ObserverManager（延迟加载）
+//    void initializeObservers() {
+//        if (!observerManager) {
+//            observerManager = LineManagerObserverBuilder()
+//                    .withRowCountObserver()
+//                    .withColumnNameObserver()
+//                    .withDataInsertedObserver()
+//                    .withLineDeletedObserver()
+//                    .withLineAddedObserver()
+//                    .build();
+//        }
+//    }
+
+    // 设置列名
+    void setColumnName(const std::vector<std::string>& col_names) {
+        column_names = col_names;
+//        notify(EventType::ColumnNameChanged);
     }
 
-
-    // 获取参数
-    _value getParam(const _index& idx) const {
-        auto& index_view = _line->get<index_tag>();
-        auto it = index_view.find(idx);
-        if (it != index_view.end()) {
-            return it->value;
-        }
-        throw std::out_of_range("Index not found");
-    }
-    // 查询符合条件的项（按索引）
-    std::vector<_value> queryIndex(const std::function<bool(const _index&)>& condition) const {
-        std::vector<_value> result;
-        auto& index_view = _line->get<index_tag>();
-        for (const auto& item : index_view) {
-            if (condition(item.index)) {
-                result.push_back(item.value);
-            }
-        }
-        return result;
+    // 插入数据
+    void insertData(const std::string& data) {
+        data_storage.push_back(data);
+//        notify(EventType::DataInserted);
+        updateRowCount();
     }
 
-
-
-    // 查询符合条件的项（按值）
-    std::vector<Item<_index, _value>> queryValue(const std::function<bool(const _value&)>& condition) const {
-        std::vector<Item<_index, _value>> result;
-        auto& value_view = _line->get<value_tag>();
-        for (const auto& item : value_view) {
-            if (condition(item.value)) {
-                result.push_back(item);
-            }
-        }
-        return result;
-    }
-
-    // 打印所有参数
-    void printParams() const {
-        std::cout << "Line Parameters:" << std::endl;
-        auto& index_view = _line->get<index_tag>();
-        for (const auto& item : index_view) {
-            std::cout << "Index: " << item.index << ", Value: " << item.value << std::endl;
+    // 删除指定的 Line
+    void deleteLine(size_t index) {
+        if (index < lines.size()) {
+            lines.erase(lines.begin() + index);
+//            notify(EventType::LineDeleted);
+            updateRowCount();
+        } else {
+            std::cerr << "Error: Line index out of range" << std::endl;
         }
     }
 
-    // 访问 ComparableItem 的成员
-    boost::shared_ptr<IndexComparableItem<_index,_value,_index>> getIndexComparableItem() const {
-        return index;
+    // 添加新的 Line
+    void addLine(const boost::shared_ptr<Line<int, double>>& line) {
+        lines.push_back(line);
+//        notify(EventType::LineAdded);
+        updateRowCount();
     }
 
-    boost::shared_ptr<ValueComparableItem<_index,_value,_value>> getValueComparableItem() const {
-        return value;
+    // 更新行数
+    void updateRowCount() {
+        row_count = lines.size();
+//        notify(EventType::RowCountChanged);
     }
 
+    size_t getRowCount() const {
+        return row_count;
+    }
 
+private:
+    LineManager() = default; // 私有构造函数
+
+
+//    void notify(EventType eventType) {
+//        if (observerManager) {
+//            observerManager->notifyAll(eventType);
+//        }
+//    }
+
+//    std::shared_ptr<LineManagerObserverBuilder> observerManager;
+    std::vector<std::string> column_names;
+    std::vector<std::string> data_storage;
+    std::vector<LineVariant> lines;
+    size_t row_count = 0;
 };
 
 
