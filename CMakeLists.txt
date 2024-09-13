@@ -16,8 +16,8 @@ set(BOOST_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/boost)  # Boost 源码路
 set(BOOST_INSTALL_DIR ${CMAKE_BINARY_DIR}/boost)  # 安装路径
 
 # 设置 Boost 环境
-set(BOOST_BUILD_OPTIONS_DEBUG "link=static variant=debug address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
-set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release address-model=64 install --prefix=${BOOST_INSTALL_DIR} --without-python")
+set(BOOST_BUILD_OPTIONS_DEBUG "link=static variant=debug  install --prefix=${BOOST_INSTALL_DIR} --without-python")
+set(BOOST_BUILD_OPTIONS_RELEASE "link=static variant=release install --prefix=${BOOST_INSTALL_DIR} --without-python")
 
 # 构建 Boost
 message(STATUS "Building Boost...")
@@ -33,6 +33,7 @@ function(check_file_exists file_path)
 endfunction()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(BOOST_BOOTSTRAP_CMD "${BOOST_SRC_DIR}/bootstrap.bat")
     # Windows 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2.exe ${BOOST_BUILD_OPTIONS_DEBUG}")
@@ -49,6 +50,24 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
                 VERBATIM
         )
     endif()
+    # 创建 bootstrap 的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_SRC_DIR}/b2.exe
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running Boost bootstrap.bat"
+            COMMAND ${BOOST_BOOTSTRAP_CMD}
+            WORKING_DIRECTORY ${BOOST_SRC_DIR}
+            COMMENT "Bootstrapping Boost for Windows"
+            VERBATIM
+    )
+
+    # 创建 Release 构建的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_INSTALL_DIR}/lib/release
+            COMMAND cmd.exe /c "cd ${BOOST_SRC_DIR} && ${BOOST_BUILD_CMD_RELEASE}"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Building Boost for Release"
+            VERBATIM
+    )
 
     # 检查 Debug 构建文件是否存在
     check_file_exists(${BOOST_INSTALL_DIR}/lib/debug)
@@ -64,6 +83,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(BOOST_BOOTSTRAP_CMD "${BOOST_SRC_DIR}/bootstrap.sh")
+    # 创建 bootstrap 的自定义命令
+    add_custom_command(
+            OUTPUT ${BOOST_SRC_DIR}/b2
+            COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Running Boost bootstrap.sh"
+            COMMAND bash ${BOOST_BOOTSTRAP_CMD}
+            WORKING_DIRECTORY ${BOOST_SRC_DIR}
+            COMMENT "Bootstrapping Boost for macOS/Linux"
+            VERBATIM
+    )
     # macOS 和 Linux 环境下的 b2 命令
     set(BOOST_BUILD_CMD_RELEASE "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_RELEASE}")
     set(BOOST_BUILD_CMD_DEBUG "${BOOST_SRC_DIR}/b2 ${BOOST_BUILD_OPTIONS_DEBUG}")
@@ -138,29 +167,41 @@ else()
 
 endif()
 
+# 设置yaml-cpp
+set(YAML_CPP ${CMAKE_CURRENT_SOURCE_DIR}/external/yaml-cpp)
+add_subdirectory(${YAML_CPP} ${CMAKE_BINARY_DIR}/yaml-cpp)
+include_directories(${YAML_CPP}/include)
+
 # 设置TALib子模块路径
 set(TA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/ta-lib)
-
 # 添加 TA-Lib 子目录
 add_subdirectory(${TA_LIB_DIR} ${CMAKE_BINARY_DIR}/ta-lib)
-
 # 添加头文件目录
 include_directories(${TA_LIB_DIR}/include)
+
 
 # 添加项目文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # 自动匹配源文件和头文件
-file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE TRADERBACKTEST_SRC "${PROJECT_SOURCE_DIR}/src/*.cpp" )
+# 添加 YAML 文件
+file(GLOB_RECURSE YAML_FILES "${PROJECT_SOURCE_DIR}/src/*.yaml")
 
 # 添加库
 add_library(TraderBacktestLib ${TRADERBACKTEST_SRC})
 
 # 添加包含目录
-target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include ${Boost_INCLUDE_DIR})
+target_include_directories(TraderBacktestLib PRIVATE ${TA_LIB_DIR}/include)
+
+foreach(YAML_FILE ${YAML_FILES})
+    get_filename_component(FILENAME ${YAML_FILE} NAME)
+    configure_file(${YAML_FILE} ${CMAKE_BINARY_DIR}/src/config/${FILENAME} COPYONLY)
+endforeach()
+
 
 # 链接 TA-Lib 库到 TraderBacktestLib
-target_link_libraries(TraderBacktestLib ta_lib ${Boost_LIBRARIES})
+target_link_libraries(TraderBacktestLib ta_lib yaml-cpp ${Boost_LIBRARIES})
 
 # 添加数据文件到输出目录
 # configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AAPL.csv src/examples/aapl.csv COPYONLY)
