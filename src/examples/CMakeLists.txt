@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
-project(TraderBacktestTest)
-
-# 设置使用 UTF-8 编码（仅适用于 MSVC 编译器）
+project(TraderBacktestTest)  # 修改项目名称为 TraderBacktestTest
+cmake_policy(SET CMP0144 NEW)
+# 设置使用 UTF-8 编码
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/source-charset:utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>")
 
