@@ -14,6 +14,8 @@
 #include "boost/any.hpp"
 #include "boost/function.hpp"
 #include "map"
+#include "lineManager/lineManager.h"
+
 struct StockData {
     std::string date;
     std::string symbol;
@@ -54,33 +56,34 @@ private:
 };
 
 
-
-// LineManager 类
-class LineManager {
-public:
-    // 注册类型
-    void registerType(const std::string& indexType, const std::string& valueType, boost::function<boost::any()> factory) {
-        factory_.registerType(indexType, valueType, std::move(factory));
-    }
-
-    // 创建 Line 实例
-    boost::shared_ptr<Line::Line<boost::any, boost::any>> createLine(const std::string& indexType, const std::string& valueType) {
-        auto lineAny = factory_.createLine(indexType, valueType);
-        return boost::any_cast<boost::shared_ptr<Line::Line<boost::any, boost::any>>>(lineAny);
-    }
-
-    // 打印所有创建的 Line 实例信息（示例）
-    void printAllLines() const {
-        for (const auto& entry : lines_) {
-            std::cout << "Line with index type: " << entry.first.first << " and value type: " << entry.first.second << std::endl;
-        }
-    }
-
-private:
-    LineFactory factory_;
-    std::map<std::pair<std::string, std::string>, boost::shared_ptr<Line::Line<boost::any, boost::any>>> lines_;
-};
+//
+//// LineManager 类
+//class LineManager {
+//public:
+//    // 注册类型
+//    void registerType(const std::string& indexType, const std::string& valueType, boost::function<boost::any()> factory) {
+//        factory_.registerType(indexType, valueType, std::move(factory));
+//    }
+//
+//    // 创建 Line 实例
+//    boost::shared_ptr<Line::Line<boost::any, boost::any>> createLine(const std::string& indexType, const std::string& valueType) {
+//        auto lineAny = factory_.createLine(indexType, valueType);
+//        return boost::any_cast<boost::shared_ptr<Line::Line<boost::any, boost::any>>>(lineAny);
+//    }
+//
+//    // 打印所有创建的 Line 实例信息（示例）
+//    void printAllLines() const {
+//        for (const auto& entry : lines_) {
+//            std::cout << "Line with index type: " << entry.first.first << " and value type: " << entry.first.second << std::endl;
+//        }
+//    }
+//
+//private:
+//    LineFactory factory_;
+//    std::map<std::pair<std::string, std::string>, boost::shared_ptr<Line::Line<boost::any, boost::any>>> lines_;
+//};
 
 
 std::vector<StockData> readStockData(const std::string& filename);
+void readLineStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager,const std::string& index_name);
 #endif //TRADERBACKTEST_STOCKS_H

@@ -23,7 +23,7 @@ namespace Line {
         void update(EventType eventType) override {
             if (eventType == EventType::LineAdded) {
                 line->getTotalDataCount();
-                std::cout << "A line has been added." << "当前总数:" << line->getRowCount()<< std::endl;
+//                std::cout << line->getColumnName() << "\t当前总数:\t" << line->getRowCount()<< std::endl;
             }
         }
     private:
@@ -39,7 +39,7 @@ namespace Line {
         void update(EventType eventType) override {
             if (eventType == EventType::DataUpdated) {
                 line->getTotalDataCount();
-                std::cout << "A line has been added." << "当前总数:" << line->getRowCount()<< std::endl;
+//                std::cout << "A line has been added." << "当前总数:" << line->getRowCount()<< std::endl;
             }
         }
     private:

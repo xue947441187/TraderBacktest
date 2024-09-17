@@ -11,15 +11,6 @@
 #include "boost/make_shared.hpp"
 // Observer 类，用于观察数据的变化
 namespace LineManager {
-    enum class ManagerEventType {
-        RowCountChanged,  // 行数变化
-        ColumnNameChanged,  // 列名变化
-        DataInserted,  // 数据插入
-        DataDeleted,  // 数据删除
-        LineDeleted,  // 行删除
-        LineAdded,  // 行添加
-        DataUpdated  // 数据更新
-    };
 //
 //template <typename T>
 //class ManagerBaseObserver{
@@ -43,12 +34,30 @@ namespace LineManager {
         explicit ManagerRowCountChangedObserver(const T& lineManager)
                 :lineManager(lineManager)
         {}
-        void update(ManagerEventType event_type) {
-            if (event_type == ManagerEventType::RowCountChanged){
-                std::cout << "A line has been added." << "当前总数:" << this->getLineManager()->getRowCount()<< std::endl;
-            };
+        void update(EventType event_type) override{
+            if (event_type == EventType::RowCountChanged){
+                std::cout << "A line has been added." << "当前总数:" << lineManager->getRowCount()<< std::endl;
+            }
 
         }
+    private:
+        T lineManager;
+    };
+
+    template <typename T>
+    class ManagerColumnNameChangedObserver: public Observer{
+    public:
+        explicit ManagerColumnNameChangedObserver(const T& lineManager)
+                :lineManager(lineManager)
+        {}
+        void update(EventType event_type) override{
+            if (event_type == EventType::RowCountChanged){
+                lineManager->getAllColumnName();
+                std::cout << "Current column name." << std::endl;
+            }
+
+        }
+
     private:
         T lineManager;
     };
@@ -85,6 +94,10 @@ namespace LineManager {
         LineManagerObserverBuilder& withLineAddedObserver() {
             // 确保 LineAddedObserver 定义正确
             lineAddedObserver->addObserver(boost::make_shared<ManagerRowCountChangedObserver<T>>(lineManager));
+            return *this;
+        }
+        LineManagerObserverBuilder& withManagerColumnNameChangedObserver(){
+            lineAddedObserver->addObserver(boost::make_shared<ManagerColumnNameChangedObserver<T>>(lineManager));
             return *this;
         }
 //    // 添加行添加观察者

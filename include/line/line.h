@@ -26,10 +26,10 @@ namespace Line{
     class Line : public boost::enable_shared_from_this<Line<_index, _value>>{
     private:
         boost::shared_ptr<ItemContainer<_index, _value>> _line;
-        boost::shared_ptr<IndexComparableItem<_index,_value,_index>> index;
-        boost::shared_ptr<ValueComparableItem<_index,_value,_value>> value;
-        std::string column_name;                        // 列名
-        size_t row_count{};                               // 数据总行数
+        boost::shared_ptr<IndexComparableItem<_index,_value>> index;
+        boost::shared_ptr<ValueComparableItem<_index,_value>> value;
+        std::string column_name;// 列名
+        size_t row_count{};// 数据总行数
         boost::shared_ptr<LineObserverManager> sentinel; // 修改类型为 LineObserverManager
 
 
@@ -43,8 +43,8 @@ namespace Line{
     public:
         Line(){
             _line = boost::make_shared<ItemContainer<_index, _value>>();
-            index = IndexComparableItem<_index,_value,_index>::createComparableItem(this->_line);
-            value = ValueComparableItem<_index,_value,_value>::createComparableItem(this->_line);
+            index = IndexComparableItem<_index,_value>::createComparableItem(this->_line);
+            value = ValueComparableItem<_index,_value>::createComparableItem(this->_line);
         }
         // 初始化 sentinel
         void initSentinel() {
@@ -142,13 +142,26 @@ namespace Line{
                 std::cout << "Index: " << item.index << ", Value: " << item.value << std::endl;
             }
         }
+        Item<_index, _value> operator[](int i) const {
+            // 获取索引视图
+            const auto& index_view = _line->template get<index_tag>();
 
+            // 检查索引范围是否合法
+            if (i < 0 || i >= static_cast<int>(index_view.size())) {
+                throw std::out_of_range("Index out of range");
+            }
+
+            // 通过迭代器访问元素并返回
+            auto it = index_view.begin();
+            std::advance(it, i);  // 将迭代器移动到第 `i` 个位置
+            return *it;  // 返回迭代器指向的对象
+        }
         // 访问 ComparableItem 的成员
-        boost::shared_ptr<IndexComparableItem<_index,_value,_index>> getIndexComparableItem() const {
+        boost::shared_ptr<IndexComparableItem<_index,_value>> getIndexComparableItem() const {
             return index;
         }
 
-        boost::shared_ptr<ValueComparableItem<_index,_value,_value>> getValueComparableItem() const {
+        boost::shared_ptr<ValueComparableItem<_index,_value>> getValueComparableItem() const {
             return value;
         }
 

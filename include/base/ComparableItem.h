@@ -19,7 +19,7 @@
 
 
 using namespace boost::multi_index;
-template <typename _index, typename _value,typename _seach=_index>
+template <typename _index, typename _value>
 class ComparableItem {
 private:
 
@@ -38,7 +38,7 @@ public:
 //        return boost::shared_ptr<ComparableItem<_index, _value>>(new ComparableItem<_index, _value>(_line));
 //    };
 
-    virtual ItemContainer<_index, _value> query(const std::function<bool(const _seach&)>& condition) const = 0;
+//    virtual ItemContainer<_index, _value> query(const std::function<bool(const _seach&)>& condition) const = 0;
 //    {
 //        ItemContainer<_index, _value> result;
 //        auto& index_view = this->_line->template get<index_tag>();
@@ -51,12 +51,12 @@ public:
 //    }
 
     // 将操作符重载声明为纯虚函数
-    virtual ItemContainer<_index, _value> operator>(const _seach& idx) const = 0;
-    virtual ItemContainer<_index, _value> operator<(const _seach& idx) const = 0;
-    virtual ItemContainer<_index, _value> operator==(const _seach& idx) const = 0;
-    virtual ItemContainer<_index, _value> operator>=(const _seach& idx) const = 0;
-    virtual ItemContainer<_index, _value> operator<=(const _seach& idx) const = 0;
-    virtual ItemContainer<_index, _value> operator!=(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator>(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator<(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator==(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator>=(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator<=(const _seach& idx) const = 0;
+//    virtual ItemContainer<_index, _value> operator!=(const _seach& idx) const = 0;
 
 
 //    // 输出操作符重载，用于打印值
@@ -73,9 +73,9 @@ public:
 //        os << "]";
 //        return os;
 //    }
-    void get_key() {
-        std::cout << "查看 _key 的类型: " << typeid(_seach).name() << std::endl;
-    }
+//    void get_key() {
+//        std::cout << "查看 _key 的类型: " << typeid(_seach).name() << std::endl;
+//    }
 };
 
 
