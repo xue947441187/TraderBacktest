@@ -60,7 +60,7 @@ void setLineValue(const boost::shared_ptr<LineManager::LineManager>& lineManager
     }
 }
 
-void readLineStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager,const std::string& index_name="Date") {
+void readLineStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager, const std::string& index_name = "Date") {
     std::ifstream file(filename);
 
     if (!file.is_open()) {
@@ -75,9 +75,6 @@ void readLineStockData(const std::string& filename, const boost::shared_ptr<Line
     typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
     Tokenizer titleTokenizer(line);
     std::vector<std::string> columnNames(titleTokenizer.begin(), titleTokenizer.end());
-
-    // 用于保存每个列名对应的 Line 对象
-//    std::map<std::string, LineVariant> columnLineMap;
 
     // 读取下一行数据以推断数据类型
     std::getline(file, line);
@@ -95,13 +92,11 @@ void readLineStockData(const std::string& filename, const boost::shared_ptr<Line
             boost::shared_ptr<Line::Line<int, std::string>> linePtr = boost::make_shared<Line::Line<int, std::string>>();
             linePtr->setColumnName(columnName);
             (*lineManager).addLine(linePtr);
-//            columnLineMap[columnName] = linePtr;
         } else {
             // 否则默认为浮点型
             auto linePtr = boost::make_shared<Line::Line<std::string, double>>();
             linePtr->setColumnName(columnName);
             (*lineManager).addLine(linePtr);
-//            columnLineMap[columnName] = linePtr;
         }
     }
 
@@ -111,15 +106,7 @@ void readLineStockData(const std::string& filename, const boost::shared_ptr<Line
     for (size_t i = 0; i < columnNames.size(); ++i) {
         const auto& columnName = columnNames[i];
         const auto& token = firstRowData[i];
-
-        // 根据列名找到对应的 Line 对象，并插入数据
-        if ((*lineManager)[columnName].which() == 0) {  // 如果是 string 类型的 Line
-            auto linePtr = boost::get<boost::shared_ptr<Line::Line<int, std::string>>>((*lineManager)[columnName]);
-            linePtr->setParam(rowIndex, token);  // 日期列是 string 类型
-        } else {
-            auto linePtr = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)[columnName]);
-            linePtr->setParam("0", std::stod(token));  // 其他列是 double 类型
-        }
+        setLineValue(lineManager, columnName, rowIndex, token, index_name);
     }
 
     rowIndex++;
@@ -137,22 +124,78 @@ void readLineStockData(const std::string& filename, const boost::shared_ptr<Line
         for (size_t i = 0; i < columnNames.size(); ++i) {
             const auto& columnName = columnNames[i];
             const auto& token = tokens[i];
-            setLineValue(lineManager,columnName,rowIndex,token,index_name);
-            // 根据列名找到对应的 Line 对象，并插入数据
-//            if ((*lineManager)[columnName].which() == 0) {  // 如果是 string 类型的 Line
-//                auto linePtr = boost::get<boost::shared_ptr<Line::Line<int, std::string>>>((*lineManager)[columnName]);
-//                linePtr->setParam(rowIndex, token);  // 日期列是 string 类型
-//            } else {
-//                auto linePtr = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)[columnName]);
-//                auto dataPtr = boost::get<boost::shared_ptr<Line::Line<int,std::string>>>(((*lineManager)[index_name]));
-//                Item<int,std::string> item = (*dataPtr)[0];
-//                linePtr->setParam(item.value, std::stod(token));  // 其他列是 double 类型
-//            }
+            setLineValue(lineManager, columnName, rowIndex, token, index_name);
         }
 
         rowIndex++;
     }
 
- 
     file.close();
+}
+
+void readLinesStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager, const std::string& index_name = "Date") {
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
+
+    // 第一步：读取并解析文件的第一行（标题行），提取列名
+    std::getline(file, line);
+    Tokenizer titleTokenizer(line);
+    std::vector<std::string> columnNames(titleTokenizer.begin(), titleTokenizer.end());
+
+    // 第二步：创建存储列数据的批量容器
+    std::vector<std::vector<std::string>> allRowData;
+    allRowData.reserve(1000); // 预分配空间以优化性能
+
+    int rowIndex = 0;
+
+    // 第三步：逐行读取数据并存储到容器中
+    while (std::getline(file, line)) {
+        Tokenizer dataTokenizer(line);
+        std::vector<std::string> rowData(dataTokenizer.begin(), dataTokenizer.end());
+
+        // 检查数据是否完整，不足的部分用空字符串填充
+        if (rowData.size() < columnNames.size()) {
+            rowData.resize(columnNames.size(), ""); // 用空字符串填充
+        }
+
+        allRowData.push_back(std::move(rowData)); // 将数据批量插入到容器中
+        rowIndex++;
+    }
+
+    // 批量插入每列数据
+    for (size_t i = 0; i < columnNames.size(); ++i) {
+        const std::string& columnName = columnNames[i];
+        std::vector<std::string> indices;
+        std::vector<double> values;
+
+        for (size_t j = 0; j < rowIndex; ++j) {
+            const std::string& token = allRowData[j][i];
+            indices.push_back(std::to_string(j));  // 假设 index 是基于行号
+
+            // 处理空值并插入
+            if ((*lineManager)[columnName].which() == 0) {  // string 类型
+                values.push_back(token.empty() ? std::numeric_limits<double>::quiet_NaN() : std::stod(token));
+            } else {  // double 类型
+                values.push_back(token.empty() ? std::numeric_limits<double>::quiet_NaN() : std::stod(token));
+            }
+
+        }
+
+        // 使用批量函数插入数据
+        lineManager->setColumnValues(columnName, indices, values);
+    }
+
+
+
+    file.close();
+
+
+
 }

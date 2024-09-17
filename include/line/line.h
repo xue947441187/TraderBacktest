@@ -88,8 +88,36 @@ namespace Line{
             }
             notify(EventType::LineAdded);
         }
+        void setParams(const std::vector<_index>& indices, const std::vector<_value>& values) {
+            if (indices.size() != values.size()) {
+                throw std::runtime_error("Indices and values must have the same size.");
+            }
 
+            this->initSentinel();  // 第一次调用 setParams 时初始化 sentinel
 
+            auto& index_view = _line->template get<index_tag>();
+
+            // 批量操作，减少单次插入和修改的开销
+            for (size_t i = 0; i < indices.size(); ++i) {
+                const _index& idx = indices[i];
+                const _value& val = values[i];
+
+                auto it = index_view.find(idx);
+                if (it != index_view.end()) {
+                    // 如果索引已存在，更新值
+                    index_view.modify(it, [&](Item<_index, _value>& item) {
+                        item.value = val;
+                    });
+                } else {
+                    // 插入新的项，并增加行数
+                    _line->insert({ idx, val });
+                    ++row_count;  // 新增一行数据，行数增加
+                }
+            }
+
+            // 只触发一次通知，避免每次插入都通知
+            notify(EventType::LineAdded);
+        }
 
         // 获取参数
         _value getParam(const _index& idx) const {
@@ -156,6 +184,21 @@ namespace Line{
             std::advance(it, i);  // 将迭代器移动到第 `i` 个位置
             return *it;  // 返回迭代器指向的对象
         }
+
+        Item<_index, _value> operator[](const std::string& i) const {
+            // 获取索引视图（基于 std::string 作为索引）
+            const auto& index_view = _line->template get<index_tag>();
+
+            // 使用 `i` 字符串查找元素
+            auto it = index_view.find(i);
+            if (it == index_view.end()) {
+                throw std::out_of_range("Item not found with the given index");
+            }
+
+            // 返回找到的元素
+            return *it;
+        }
+
         // 访问 ComparableItem 的成员
         boost::shared_ptr<IndexComparableItem<_index,_value>> getIndexComparableItem() const {
             return index;

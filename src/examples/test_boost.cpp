@@ -13,10 +13,10 @@ using namespace boost::asio;
 #include "stocks.h"
 
 int main() {
-
+    auto start = std::chrono::high_resolution_clock::now();
     // 创建 LineManager 实例
     auto lineManager = LineManager::LineManager::create();
-    readLineStockData("aapl.csv",lineManager,"Date");
+    readLinesStockData("aapl.csv",lineManager,"Date");
     // 初始化观察者
 //    lineManager->initializeObservers();
 
@@ -39,19 +39,28 @@ int main() {
     // 设置列名
 //    lineManager->setColumnName({"Column1", "Column2"});
     // 打印行数
-    std::cout << "Current row count: " << lineManager->getRowCount() << std::endl;
+    std::cout << "Current row count: " << lineManager->getLineCount() << std::endl;
 //    auto  lineVar = (*lineManager)["Open"];
     auto line = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)["Open"]);
     auto a = (*line->getValueComparableItem()) > 3.1;
-    for (auto &s:a ){
-        std::cout<< s.index << "\t" <<s.value << std::endl;
-    }
+//    for (auto &s:a ){
+//        std::cout<< s.index << "\t" <<s.value << std::endl;
+//    }
     //    line.apply_visitor()
     // 删除指定的 Line
 //    lineManager->deleteLine(0);
 
     // 打印行数
-    std::cout << "Current row count after deletion: " << lineManager->getRowCount() << std::endl;
+//    std::cout << "Current row count after deletion: " << lineManager->getRowCount() << std::endl;
+
+
+
+    auto end = std::chrono::high_resolution_clock::now();
+    // 计算持续时间
+    std::chrono::duration<double> duration = end - start;
+
+    // 输出运行时间
+    std::cout << "运行时间: " << duration.count() << " 秒" << std::endl;
 
     return 0;
 

@@ -26,7 +26,10 @@ namespace LineManager {
 //private:
 //    T lineManager;
 //};
+    enum class LineManagerEventType{
 
+
+    };
 
     template <typename T>
     class ManagerRowCountChangedObserver: public Observer{
@@ -38,7 +41,6 @@ namespace LineManager {
             if (event_type == EventType::RowCountChanged){
                 std::cout << "A line has been added." << "当前总数:" << lineManager->getRowCount()<< std::endl;
             }
-
         }
     private:
         T lineManager;

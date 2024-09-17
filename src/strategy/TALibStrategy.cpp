@@ -4,7 +4,7 @@
 
 
 #include "strategy/TALibStrategy.h"
-
+#include "ta_libc.h"
 void MovingAverageStrategy::setInputColumns(const std::vector<std::string> &columnNames) {
     if (columnNames.size() != 1) {
         closeColumn = "close";
@@ -16,7 +16,6 @@ void MovingAverageStrategy::setInputColumns(const std::vector<std::string> &colu
 
 }
 void MovingAverageStrategy::process(LineManager::LineManager *manager, std::string col_name) {
-
     std::cout << "MA" << std::endl;
 }
 

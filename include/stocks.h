@@ -86,4 +86,5 @@ private:
 
 std::vector<StockData> readStockData(const std::string& filename);
 void readLineStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager,const std::string& index_name);
+void readLinesStockData(const std::string& filename, const boost::shared_ptr<LineManager::LineManager>& lineManager,const std::string& index_name);
 #endif //TRADERBACKTEST_STOCKS_H
