@@ -8,7 +8,7 @@
 std::unique_ptr<TALibStrategy> TALibStrategyFactory::createStrategy(
         const std::string &strategyName,
         const std::string& columnNames,
-        const StrategyParams& params)
+        const StrategyParams params)
 {
     auto it = registry.find(strategyName);
     if (it != registry.end()) {

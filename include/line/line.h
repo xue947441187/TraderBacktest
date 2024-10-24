@@ -215,7 +215,10 @@ namespace Line{
 
             auto& index_view = _line->template get<index_tag>();
             for (const auto& item : index_view) {
-                std::cout << std::setw(10) << " "  // 不打印索引，只打印数据
+//                std::cout << std::setw(10) << " "  // 不打印索引，只打印数据
+//                          << std::setw(10) << item.value << std::endl;
+
+                std::cout << std::left << std::setw(10) << item.index
                           << std::setw(10) << item.value << std::endl;
             }
         }

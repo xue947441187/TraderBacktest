@@ -14,17 +14,17 @@
 
 class TALibStrategyFactory {
 public:
-    std::unique_ptr<TALibStrategy> createStrategy(const std::string& strategyName,const std::string& columnNames,const StrategyParams& params);
+    std::unique_ptr<TALibStrategy> createStrategy(const std::string& strategyName,const std::string& columnNames,const StrategyParams params);
 
-    explicit TALibStrategyFactory(boost::shared_ptr<LineManager::LineManager> lineManager)
-            : lineManager(std::move(lineManager))
+    explicit TALibStrategyFactory(boost::shared_ptr<LineManager::LineManager> & lineManager)
+            : lineManager(lineManager)
     {
 
-//        registry["MovingAverage"] = [this]() { return std::make_unique<MovingAverageStrategy>(lineManager); };
+        registry["MovingAverage"] = [lineManager]() { return std::make_unique<MovingAverageStrategy>(lineManager); };
 
-//        registry["RSI"] = [this]() { return boost::make_unique<RSIStrategy>(&this->lineManager); };
+        registry["RSI"] = [lineManager]() { return std::make_unique<RSIStrategy>(lineManager); };
         // 其他策略注册
-        // registry["MACD"] = [this]() { return boost::movelib::make_unique<MACDStrategy>(lineManager); };
+//         registry["MACD"] = [lineManager]() { return std::make_unique<MACDStrategy>(lineManager); };
 
     }
 private:

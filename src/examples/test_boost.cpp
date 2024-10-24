@@ -11,6 +11,8 @@ using namespace boost::asio;
 #include "line/line.h"
 #include "lineManager/lineManager.h"
 #include "stocks.h"
+#include "strategy/TALibStrategy.h"
+#include "strategy/StrategyFactory.h"
 
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
@@ -41,8 +43,8 @@ int main() {
     // 打印行数
     std::cout << "Current row count: " << lineManager->getLineCount() << std::endl;
 //    auto  lineVar = (*lineManager)["Open"];
-    auto line = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)["Open"]);
-    auto a = (*line->getValueComparableItem()) > 3.1;
+//    auto line = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)["Open"]);
+//    auto a = (*line->getValueComparableItem()) > 3.1;
 //    for (auto &s:a ){
 //        std::cout<< s.index << "\t" <<s.value << std::endl;
 //    }
@@ -52,7 +54,16 @@ int main() {
 
     // 打印行数
 //    std::cout << "Current row count after deletion: " << lineManager->getRowCount() << std::endl;
-
+//    auto movingAverageStrategy = std::make_unique<MovingAverageStrategy>(lineManager);
+//    movingAverageStrategy->process();
+    TALibStrategyFactory factory(lineManager);
+    // 创建策略参数
+    StrategyParams params;
+    params.setNumericParam("period", 14);  // 对于移动平均策略
+    params.setNumericParam("rsiPeriod", 14); // 对于RSI策略
+    // 创建移动平均策略
+    auto movingAverageStrategy = factory.createStrategy("RSI", "close",params);
+    movingAverageStrategy->process(); // 执行策略
 
 
     auto end = std::chrono::high_resolution_clock::now();

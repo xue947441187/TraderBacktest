@@ -53,10 +53,10 @@ public:
 
         }
     };
-    void setParams(const StrategyParams& params) {
+    void setParams(const StrategyParams & params) {
         this->params = params;
     }
-    explicit TALibStrategy(boost::shared_ptr<LineManager::LineManager> manager):
+    explicit TALibStrategy(boost::shared_ptr<LineManager::LineManager> & manager):
             manager(manager){}
 protected :
     boost::shared_ptr<LineManager::LineManager> manager;
