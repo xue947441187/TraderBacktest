@@ -1,0 +1,35 @@
+# 忽略操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+external/*
+cmake-build-debug/
+cmake-build-debug-visual-studio/
+# 忽略编译生成的文件或目录
+/build/
+/bin/
+/out/
+
+# 忽略依赖包和安装目录
+/node_modules/
+/bower_components/
+/vendor/
+
+# 忽略临时文件
+*.tmp
+*.log
+
+# 忽略IDE或编辑器的配置文件
+.idea/
+.vscode/
+
+# 忽略个人配置文件
+*.config
+
+# 忽略敏感信息，如API密钥等
+.env
+*.key
+
+# 忽略备份文件
+*.bak
+*.backup
