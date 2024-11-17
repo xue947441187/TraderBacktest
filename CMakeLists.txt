@@ -2,11 +2,18 @@ cmake_minimum_required(VERSION 3.26)
 project(backtest)
 
 set(CMAKE_CXX_STANDARD 17)
+# 查找操作系统类型并设置不同的路径
+if (APPLE)
+    # macOS 设置
+    set(BOOST_ROOT "/usr/local/opt/boost")  # Homebrew 安装的 Boost 默认路径
+    set(Boost_USE_STATIC_LIBS ON)  # 是否使用静态库
+elseif(WIN32)
+    # Windows 设置
+    set(BOOST_ROOT "C:/boost")
+    set(Boost_DEBUG ON)
+    set(Boost_USE_STATIC_LIBS ON)
+endif()
 
-# 设置 Boost 路径和选项
-set(BOOST_ROOT "C:/boost")
-set(Boost_DEBUG ON)
-set(Boost_USE_STATIC_LIBS ON)
 
 # 设置 TA-Lib 的路径
 set(TA_LIB_ROOT "${CMAKE_SOURCE_DIR}/external/ta-lib")
