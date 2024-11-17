@@ -14,21 +14,23 @@
 
 class TALibStrategyFactory {
 public:
-    std::unique_ptr<TALibStrategy> createStrategy(const std::string& strategyName,const std::string& columnNames,const StrategyParams params);
+    std::shared_ptr<TALibStrategy> createStrategy(const std::string& strategyName,const std::string& columnNames,StrategyParams params);
 
     explicit TALibStrategyFactory(boost::shared_ptr<LineManager::LineManager> & lineManager)
             : lineManager(lineManager)
     {
 
-        registry["MovingAverage"] = [lineManager]() { return std::make_unique<MovingAverageStrategy>(lineManager); };
+        registry["MovingAverage"] = [lineManager]() { return std::make_shared<MovingAverageStrategy>(lineManager); };
+        registry["SMA"] = registry["MovingAverage"];  // MovingAverage 和 SMA 使用相同的策略实例
+        registry["MA"] = registry["MovingAverage"];   // MovingAverage 和 MA 使用相同的策略实例
 
-        registry["RSI"] = [lineManager]() { return std::make_unique<RSIStrategy>(lineManager); };
+        registry["RSI"] = [lineManager]() { return std::make_shared<RSIStrategy>(lineManager); };
         // 其他策略注册
 //         registry["MACD"] = [lineManager]() { return std::make_unique<MACDStrategy>(lineManager); };
 
     }
 private:
-    std::map<std::string, std::function<std::unique_ptr<TALibStrategy>()>> registry;
+    std::map<std::string, std::function<std::shared_ptr<TALibStrategy>()>> registry;
 
 
     boost::shared_ptr<LineManager::LineManager> lineManager;

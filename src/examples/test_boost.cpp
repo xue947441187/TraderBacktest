@@ -59,13 +59,12 @@ int main() {
     TALibStrategyFactory factory(lineManager);
     // 创建策略参数
     StrategyParams params;
-    params.setNumericParam("period", 3);  // 对于移动平均策略
-    params.setNumericParam("rsiPeriod", 14); // 对于RSI策略
+    params.setNumericParam("period", 14);  // 对于移动平均策略
     // 创建移动平均策略
-    auto movingAverageStrategy = factory.createStrategy("MovingAverage", "close",params);
+    auto movingAverageStrategy = factory.createStrategy("MA", "close",params);
     movingAverageStrategy->process(); // 执行策略
 
-    auto dataPtr = (*lineManager)["SMA3"];
+    auto dataPtr = (*lineManager)["SMA_14"];
     auto dataline = boost::get<boost::shared_ptr<Line::Line<int,double>>>(dataPtr);
     dataline->getColumnName();
     dataline->print();

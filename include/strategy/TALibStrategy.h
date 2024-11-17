@@ -38,6 +38,7 @@ public:
         }
         throw std::invalid_argument("String parameter not found: " + key);
     }
+protected:
 };
 
 
@@ -58,6 +59,11 @@ public:
     }
     explicit TALibStrategy(boost::shared_ptr<LineManager::LineManager> & manager):
             manager(manager){}
+
+protected:
+    template<typename IndexType,typename DataType>
+    std::pair<std::vector<IndexType>,std::vector<DataType>> extractColumnData();
+
 protected :
     boost::shared_ptr<LineManager::LineManager> manager;
     std::string closeColumn;

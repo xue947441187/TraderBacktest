@@ -5,7 +5,7 @@
 #include "strategy/StrategyFactory.h"
 #include "strategy/TALibStrategy.h"
 
-std::unique_ptr<TALibStrategy> TALibStrategyFactory::createStrategy(
+std::shared_ptr<TALibStrategy> TALibStrategyFactory::createStrategy(
         const std::string &strategyName,
         const std::string& columnNames,
         const StrategyParams params)
@@ -15,7 +15,7 @@ std::unique_ptr<TALibStrategy> TALibStrategyFactory::createStrategy(
         auto strategy = it->second();  // 创建策略
         strategy->setInputColumns(columnNames);
         strategy->setParams(params); // 设置策略参数
-        return std::move(strategy);
+        return strategy;
     } else {
         throw std::invalid_argument("Unknown strategy: " + strategyName);
     }
