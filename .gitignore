@@ -2,7 +2,6 @@
 .DS_Store
 Thumbs.db
 
-external/*
 cmake-build-debug/
 cmake-build-debug-visual-studio/
 # 忽略编译生成的文件或目录
