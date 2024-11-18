@@ -1,5 +1,6 @@
 # 获取所有测试文件
 file(GLOB TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+set(CSV_FILE ${CMAKE_CURRENT_SOURCE_DIR}/aapl.csv)
 
 # 为每个测试文件创建独立的可执行文件
 foreach(TEST_FILE ${TEST_SOURCES})
@@ -16,6 +17,7 @@ foreach(TEST_FILE ${TEST_SOURCES})
     add_custom_command(TARGET ${TEST_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:ta_lib>
+            ${CSV_FILE}
             $<TARGET_FILE_DIR:${TEST_NAME}>
     )
 endforeach()

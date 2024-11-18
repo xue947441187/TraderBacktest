@@ -88,6 +88,14 @@ public:
     : TALibStrategy(manager) {}
 };
 
+class MACDStrategy : public TALibStrategy {
+public:
+    void process() override;
+    explicit MACDStrategy(boost::shared_ptr<LineManager::LineManager> manager)
+            : TALibStrategy(manager) {}
+};
+
+
 
 
 

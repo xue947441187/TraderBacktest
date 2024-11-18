@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.16)
 project(backtest)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -16,7 +16,7 @@ elseif(UNIX)
     # Linux 设置
     # 如果 Boost 是通过包管理器安装的，通常不需要设置 BOOST_ROOT
     # 在某些情况下，如果 Boost 库不在标准路径下，可能需要指定 BOOST_ROOT
-    set(BOOST_ROOT "/usr/local")  # 通常 Boost 安装在 /usr/local 目录下
+#    set(BOOST_ROOT "/usr/local")  # 通常 Boost 安装在 /usr/local 目录下
     set(Boost_USE_STATIC_LIBS ON)  # 是否使用静态库
 endif()
 

@@ -3,10 +3,8 @@
 //
 // test_boost.cpp
 #include <iostream>
-#include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 using namespace boost;
-using namespace boost::asio;
 //#include "line/lineObserver.h"
 #include "line/line.h"
 #include "lineManager/lineManager.h"
@@ -60,11 +58,14 @@ int main() {
     // 创建策略参数
     StrategyParams params;
     params.setNumericParam("period", 14);  // 对于移动平均策略
+    params.setNumericParam("FastPeriod", 5);  // 对于移动平均策略
+    params.setNumericParam("SlowPeriod", 10);  // 对于移动平均策略
+    params.setNumericParam("SignalPeriod", 20);  // 对于移动平均策略
     // 创建移动平均策略
-    auto movingAverageStrategy = factory.createStrategy("MA", "close",params);
+    auto movingAverageStrategy = factory.createStrategy("MACD", "close",params);
     movingAverageStrategy->process(); // 执行策略
 
-    auto dataPtr = (*lineManager)["SMA_14"];
+    auto dataPtr = (*lineManager)["MACDSignal"];
     auto dataline = boost::get<boost::shared_ptr<Line::Line<int,double>>>(dataPtr);
     dataline->getColumnName();
     dataline->print();
