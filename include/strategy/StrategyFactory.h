@@ -25,6 +25,7 @@ public:
         registry["MA"] = registry["MovingAverage"];   // MovingAverage 和 MA 使用相同的策略实例
 
         registry["RSI"] = [lineManager]() { return std::make_shared<RSIStrategy>(lineManager); };
+        registry["MACD"] = [lineManager]() { return std::make_shared<MACDStrategy>(lineManager); };
         // 其他策略注册
 //         registry["MACD"] = [lineManager]() { return std::make_unique<MACDStrategy>(lineManager); };
 
