@@ -1,135 +1,94 @@
 //
-// Created by 94744 on 2024/9/16.
+// Reorganized & modernized TA-Lib strategy layer
+// 2026-02-01
 //
-
-
-#include <numeric>
 #include "strategy/TALibStrategy.h"
 #include "ta_libc.h"
 
+#include <iostream>
+#include <vector>
+#include <limits>
+
+// Helper: place TA-Lib compact outputs into full-length vector (NaN padded)
+static std::vector<double> expandTalibOutput(size_t fullSize, int outBegIdx, int outNbElement, const double* talibOut) {
+    std::vector<double> out(fullSize, std::numeric_limits<double>::quiet_NaN());
+    for (int i = 0; i < outNbElement; ++i) {
+        const size_t pos = static_cast<size_t>(outBegIdx + i);
+        if (pos < out.size()) out[pos] = talibOut[i];
+    }
+    return out;
+}
+
 void MovingAverageStrategy::process() {
+    const std::string src = inputColumns.empty() ? defaultPriceColumn() : inputColumns.front();
+    auto [idx, data] = getSeriesIntDouble(src);
 
-    auto [finalIndices,data] = this->extractColumnData<int,double>();
+    const int period = static_cast<int>(params.getNumericParam("period"));
+    if (period <= 0) throw std::invalid_argument("period must be > 0");
 
-    // 获取 period 参数
-    const int period = this->params.getNumericParam("period");
-
-    // 为计算 SMA 准备输出缓冲区
     std::vector<double> smaResult(data.size(), 0.0);
     int outBegIdx = 0, outNbElement = 0;
 
-    // 调用 TA_SMA 计算简单移动平均值
-    TA_RetCode retCode = TA_SMA(0, data.size() - 1, data.data(), period, &outBegIdx, &outNbElement, smaResult.data());
-
-    // 检查是否计算成功
-    if (retCode != TA_SUCCESS) {
-        std::cerr << "Error calculating SMA!" << std::endl;
-        return;
+    TA_RetCode rc = TA_SMA(0, static_cast<int>(data.size()) - 1, data.data(),
+                           period, &outBegIdx, &outNbElement, smaResult.data());
+    if (rc != TA_SUCCESS) {
+        throw std::runtime_error("TA_SMA failed");
     }
 
-    // 输出结果
-    std::cout << "SMA calculated successfully!" << std::endl;
-    // 打印结果（可选）
-    // for (int i = 0; i < outNbElement; ++i) {
-    //     std::cout << "SMA[" << (outBegIdx + i) << "] = " << smaResult[outBegIdx + i] << std::endl;
-    // }
-    std::vector<double> out(data.size(), 0.0);
-    for (int i = 0; i < outNbElement; ++i) {
-        out[outBegIdx + i] = smaResult[i];
-    }
-    // 设置计算的 SMA 数据到 manager
-    this->manager->setColumnValues("SMA_" + std::to_string(period), finalIndices, out);
-
-    std::cout << "MA processing complete." << std::endl;
+    auto out = expandTalibOutput(data.size(), outBegIdx, outNbElement, smaResult.data());
+    writeSeriesIntDouble("SMA_" + std::to_string(period), idx, out);
 }
-
 
 void RSIStrategy::process() {
-    auto [index_,data_] = this->extractColumnData<int,double>();
+    const std::string src = inputColumns.empty() ? defaultPriceColumn() : inputColumns.front();
+    auto [idx, data] = getSeriesIntDouble(src);
 
+    const int period = static_cast<int>(params.getNumericParam("period"));
+    if (period <= 0) throw std::invalid_argument("period must be > 0");
+
+    std::vector<double> rsiResult(data.size(), 0.0);
     int outBegIdx = 0, outNbElement = 0;
-    const int period = this->params.getNumericParam("period");
-    std::vector<double> rsiResult(data_.size() -1 ,0.0);
 
-
-    TA_RetCode retCode = TA_RSI(0,data_.size()-1,data_.data(),period,&outBegIdx,&outNbElement,rsiResult.data());
-    if (retCode != TA_SUCCESS) {
-        std::cerr << "Error calculating RSI!" << std::endl;
-        return;
+    TA_RetCode rc = TA_RSI(0, static_cast<int>(data.size()) - 1, data.data(),
+                           period, &outBegIdx, &outNbElement, rsiResult.data());
+    if (rc != TA_SUCCESS) {
+        throw std::runtime_error("TA_RSI failed");
     }
 
-    std::cout << "SMA calculated successfully!" << std::endl;
-    // 打印结果（可选）
-    // for (int i = 0; i < outNbElement; ++i) {
-    //     std::cout << "SMA[" << (outBegIdx + i) << "] = " << smaResult[outBegIdx + i] << std::endl;
-    // }
-    std::vector<double> out(data_.size(), 0.0);
-    for (int i = 0; i < outNbElement; ++i) {
-        out[outBegIdx + i] = rsiResult[i];
-    }
-    // 设置计算的 SMA 数据到 manager
-    this->manager->setColumnValues("RSI_" + std::to_string(period), index_, out);
-
-    std::cout << "RSI" << std::endl;
+    auto out = expandTalibOutput(data.size(), outBegIdx, outNbElement, rsiResult.data());
+    writeSeriesIntDouble("RSI_" + std::to_string(period), idx, out);
 }
-
 
 void MACDStrategy::process() {
-    auto [index,data] = this->extractColumnData<int,double>();
+    const std::string src = inputColumns.empty() ? defaultPriceColumn() : inputColumns.front();
+    auto [idx, data] = getSeriesIntDouble(src);
+
+    const int fastPeriod = static_cast<int>(params.getNumericParam("FastPeriod"));
+    const int slowPeriod = static_cast<int>(params.getNumericParam("SlowPeriod"));
+    const int signalPeriod = static_cast<int>(params.getNumericParam("SignalPeriod"));
+
+    if (fastPeriod <= 0 || slowPeriod <= 0 || signalPeriod <= 0) {
+        throw std::invalid_argument("MACD periods must be > 0");
+    }
+
+    std::vector<double> macd(data.size(), 0.0);
+    std::vector<double> signal(data.size(), 0.0);
+    std::vector<double> hist(data.size(), 0.0);
     int outBegIdx = 0, outNbElement = 0;
-    const int fastPeriod = this->params.getNumericParam("FastPeriod");
-    const int slowPeriod = this->params.getNumericParam("SlowPeriod");
-    const int signalperiod = this->params.getNumericParam("SignalPeriod");
-    std::vector<double> macdResult(data.size() -1 ,0.0);
-    std::vector<double> singalResult(data.size() -1 ,0.0);
-    std::vector<double> histResult(data.size() -1 ,0.0);
-    TA_RetCode retCode = TA_MACD(0,data.size()-1,data.data(),fastPeriod,slowPeriod,signalperiod,&outBegIdx,&outNbElement,macdResult.data(),singalResult.data(),histResult.data());
-    if (retCode != TA_SUCCESS){
-        std::cerr << "Error calculating MACD!" << std::endl;
-        return;
-    }
-    std::vector<double> outmacdResult(data.size(), 0.0);
-    std::vector<double> outsingalResult(data.size(), 0.0);
-    std::vector<double> outhistResult(data.size(), 0.0);
-    for (int i = 0; i < outNbElement; ++i) {
-        outmacdResult[outBegIdx + i] = macdResult[i];
-        outsingalResult[outBegIdx + i] = singalResult[i];
-        outhistResult[outBegIdx + i] = histResult[i];
-    }
-    this->manager->setColumnValues("MACD",index,outmacdResult);
-    this->manager->setColumnValues("MACDSignal",index,outsingalResult);
-    this->manager->setColumnValues("MACDHist",index,outhistResult);
-}
 
-
-
-template<typename IndexType,typename DataType>
-std::pair<std::vector<IndexType>, std::vector<DataType>> TALibStrategy::extractColumnData() {
-    auto DatelineVariant = (*this->manager)[(*this->manager).getIndexName()];
-    auto lineVariant = (*this->manager)["Open"];
-
-    // 提取索引列与数据列
-    auto indexPtr = boost::get<boost::shared_ptr<Line::Line<int, std::string>>>(DatelineVariant);
-    auto linePtr = boost::get<boost::shared_ptr<Line::Line<int, double>>>(lineVariant);
-
-    // 检查数据列是否有效
-    if (!linePtr) {
-        std::cerr << "Error: Column 'Open' is not of the expected type." << std::endl;
-        return std::pair<std::vector<IndexType>, std::vector<DataType>>();
+    TA_RetCode rc = TA_MACD(0, static_cast<int>(data.size()) - 1, data.data(),
+                            fastPeriod, slowPeriod, signalPeriod,
+                            &outBegIdx, &outNbElement,
+                            macd.data(), signal.data(), hist.data());
+    if (rc != TA_SUCCESS) {
+        throw std::runtime_error("TA_MACD failed");
     }
 
-    // 提取数据并将其转换为 std::vector<double>
-    std::vector<double> data = linePtr->getValuesList();
-    int dataSize = data.size();
+    auto outMacd   = expandTalibOutput(data.size(), outBegIdx, outNbElement, macd.data());
+    auto outSignal = expandTalibOutput(data.size(), outBegIdx, outNbElement, signal.data());
+    auto outHist   = expandTalibOutput(data.size(), outBegIdx, outNbElement, hist.data());
 
-    // 如果没有数据，直接返回
-    if (dataSize == 0) {
-        std::cerr << "Error: No data available for SMA calculation." << std::endl;
-        return std::pair<std::vector<IndexType>, std::vector<DataType>>();
-    }
-
-    // 构造 finalIndices (可以用于记录数据的索引)
-    std::vector<int> finalIndices(dataSize);
-    std::iota(finalIndices.begin(), finalIndices.end(), 0); // 用 std::iota 填充索引数组
-    return std::make_pair(finalIndices,data);
+    writeSeriesIntDouble("MACD", idx, outMacd);
+    writeSeriesIntDouble("MACDSignal", idx, outSignal);
+    writeSeriesIntDouble("MACDHist", idx, outHist);
 }
