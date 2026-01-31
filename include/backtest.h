@@ -8,7 +8,6 @@
 #include <vector>
 #include "trading_module.h" // 引入交易模块的头文件
 #include "stocks.h" // 引入交易模块的头文件
-#include "indicators.h"
 // 枚举类定义
 enum class ConditionType {
     GreaterThan,

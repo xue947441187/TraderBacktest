@@ -4,6 +4,8 @@
 // test_boost.cpp
 #include <iostream>
 #include <boost/shared_ptr.hpp>
+#include <chrono>
+
 using namespace boost;
 //#include "line/lineObserver.h"
 #include "line/line.h"
@@ -15,8 +17,9 @@ using namespace boost;
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
     // 创建 LineManager 实例
-    auto lineManager = LineManager::LineManager::create();
-    readLinesStockData("aapl.csv",lineManager,"Date");
+    auto df = LineManager::LineManager::create();
+    readLinesStockData("aapl.csv", df, "Date");
+
     // 初始化观察者
 //    lineManager->initializeObservers();
 
@@ -39,7 +42,7 @@ int main() {
     // 设置列名
 //    lineManager->setColumnName({"Column1", "Column2"});
     // 打印行数
-    std::cout << "Current row count: " << lineManager->getLineCount() << std::endl;
+    std::cout << "Current row count: " << df->getLineCount() << std::endl;
 //    auto  lineVar = (*lineManager)["Open"];
 //    auto line = boost::get<boost::shared_ptr<Line::Line<std::string, double>>>((*lineManager)["Open"]);
 //    auto a = (*line->getValueComparableItem()) > 3.1;
@@ -54,7 +57,7 @@ int main() {
 //    std::cout << "Current row count after deletion: " << lineManager->getRowCount() << std::endl;
 //    auto movingAverageStrategy = std::make_unique<MovingAverageStrategy>(lineManager);
 //    movingAverageStrategy->process();
-    TALibStrategyFactory factory(lineManager);
+    TALibStrategyFactory factory(df);
     // 创建策略参数
     StrategyParams params;
     params.setNumericParam("period", 14);  // 对于移动平均策略
@@ -62,10 +65,10 @@ int main() {
     params.setNumericParam("SlowPeriod", 10);  // 对于移动平均策略
     params.setNumericParam("SignalPeriod", 20);  // 对于移动平均策略
     // 创建移动平均策略
-    auto movingAverageStrategy = factory.createStrategy("MACD", "close",params);
+    auto movingAverageStrategy = factory.createStrategy("MACD", "Close",params);
     movingAverageStrategy->process(); // 执行策略
 
-    auto dataPtr = (*lineManager)["MACDSignal"];
+    auto dataPtr = (*df)["MACDSignal"];
     auto dataline = boost::get<boost::shared_ptr<Line::Line<int,double>>>(dataPtr);
     dataline->getColumnName();
     dataline->print();

@@ -1,75 +1,55 @@
 //
-// Created by 薛新岗 on 2024/5/15.
+// trading_module.cpp (rewritten)
 //
-
 #include "trading_module.h"
-#include <iostream>
 
-void TradingModule::executeTrade(const std::string& date, const std::string& symbol, double price, int quantity) {
-    // Simulate executing a trade
-    std::cout << "Executing trade: Date: " << date << ", Symbol: " << symbol << ", Price: " << price
-              << ", Quantity: " << quantity << std::endl;
+TradingModule::TradingModule(double commissionPercentage, double slippageRate, double initialCapital)
+        : engine_(initialCapital, commissionPercentage, slippageRate),
+          commissionPercentage_(commissionPercentage),
+          slippageRate_(slippageRate) {}
 
-    // Calculate commission
-    double commission = calculateCommission(price, quantity);
-
-    // Record the trade
-    Trade trade;
-    trade.date = date;
-    trade.symbol = symbol;
-    trade.price = price;
-    trade.quantity = quantity;
-    trade.commission = commission;
-
-    // Perform any other necessary actions, such as updating account balances, etc.
+void TradingModule::setInitialCapital(double capital) {
+    // Rebuild engine with new capital while preserving commission/slippage settings.
+    engine_ = EnhancedTradingEngine(capital, commissionPercentage_, slippageRate_);
 }
 
-double TradingModule::calculateCommission(double price, int quantity) {
-    // Simple commission calculation, can be adjusted based on your requirements
-    return 0.005 * price * quantity; // Assuming commission rate of 0.5%
+double TradingModule::calculateCommission(double price, int quantity) const {
+    return std::abs(price * quantity) * commissionPercentage_;
 }
 
-double TradingModule::calculateProfitLoss(double buyPrice, double sellPrice, int quantity) {
-    // Simple profit/loss calculation
+double TradingModule::calculateProfitLoss(double buyPrice, double sellPrice, int quantity) const {
     return (sellPrice - buyPrice) * quantity;
 }
 
-TradingModule::TradingModule(double commissionPercentage) : commissionPercentage(commissionPercentage) {}
-void TradingModule::buy(const std::string& date, const std::string& symbol, double price, int quantity) {
-    // 计算手续费
-    double commission = commissionPercentage * price * quantity;
-    this->addTrade(const_cast<std::string &>(date), const_cast<std::string &>(symbol), price, quantity, "buy", commission);
-
+bool TradingModule::buy(const std::string& date, const std::string& symbol, double price, int quantity) {
+    buyQuantity_ = quantity;
+    return engine_.execute_order(symbol, OrderType::MarketBuy, price, quantity, date);
 }
 
-
-void TradingModule::sell(const std::string& date, const std::string& symbol, double price, int quantity) {
-    // 计算手续费
-    double commission = commissionPercentage * price * quantity;
-    this->addTrade(date,symbol,price,quantity,"sell",commission);
-
+bool TradingModule::sell(const std::string& date, const std::string& symbol, double price, int quantity) {
+    return engine_.execute_order(symbol, OrderType::MarketSell, price, quantity, date);
 }
+
+bool TradingModule::executeTrade(const std::string& date, const std::string& symbol, double price, int quantity) {
+    // default to market buy for legacy callers
+    return engine_.execute_order(symbol, OrderType::MarketBuy, price, quantity, date);
+}
+
 std::vector<TradeInfo> TradingModule::getTradeInfoList() const {
-    return tradeInfoList;
-}
-
-void TradingModule::addTrade(const  std::string &date,const std::string &symbol,double price,int quantity,const std::string &type,double commission) {
-    // 添加交易信息到列表中
-    TradeInfo trade;
-    trade.date = date;
-    trade.symbol = symbol;
-    trade.price = price;
-    trade.quantity = quantity;
-    trade.type = type;
-    trade.commissionPercentage = commissionPercentage;
-    trade.commission = commission;
-    tradeInfoList.push_back(trade);
-    this->totalcommission = this->totalcommission + commission;
-}
-void TradingModule::setBuyQuantity(int quantity) {
-    buyQuantity = quantity;
-}
-
-int TradingModule::getBuyQuantity() {
-    return buyQuantity;
+    auto trades = engine_.get_trade_history();
+    std::vector<TradeInfo> out;
+    out.reserve(trades.size());
+    for (const auto& t : trades) {
+        TradeInfo ti;
+        ti.date = t.timestamp;
+        ti.symbol = t.symbol;
+        ti.price = t.executed_price;
+        ti.quantity = t.executed_quantity;
+        ti.type = (order_side(t.order_type) == Side::Buy) ? "buy" : "sell";
+        ti.commissionPercentage = t.commission_rate;
+        ti.commission = t.commission;
+        ti.position_effect = t.position_effect;
+        out.push_back(std::move(ti));
+    }
+    return out;
 }
