@@ -5,7 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 # 查找操作系统类型并设置不同的路径
 if (APPLE)
     # macOS 设置
-    set(BOOST_ROOT "/usr/local/opt/boost")  # Homebrew 安装的 Boost 默认路径
+    set(BOOST_ROOT "/opt/boost")  # Homebrew 安装的 Boost 默认路径
+    set(CMAKE_LINKER "/usr/bin/ld" CACHE FILEPATH "Linker path")
+    set(CMAKE_AR "/usr/bin/ar" CACHE FILEPATH "Archiver path")
+    if (POLICY CMP0144)
+        cmake_policy(SET CMP0144 NEW)
+    endif ()
     set(Boost_USE_STATIC_LIBS ON)  # 是否使用静态库
 elseif(WIN32)
     # Windows 设置
