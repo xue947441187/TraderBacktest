@@ -1,43 +1,40 @@
 //
-// Created by 94744 on 2024/9/16.
+// Reorganized Strategy Factory (registry + aliases + consistent column parsing)
+// 2026-02-01
 //
-
 #ifndef TRADERBACKTEST_STRATEGYFACTORY_H
 #define TRADERBACKTEST_STRATEGYFACTORY_H
-#include <utility>
+
+#include <map>
+#include <functional>
+#include <memory>
+#include <string>
+#include <stdexcept>
 
 #include "strategy/TALibStrategy.h"
-#include "boost/system/errc.hpp"
-
-
-
 
 class TALibStrategyFactory {
 public:
-    std::shared_ptr<TALibStrategy> createStrategy(const std::string& strategyName,const std::string& columnNames,StrategyParams params);
+    explicit TALibStrategyFactory(const boost::shared_ptr<LineManager::LineManager>& lineManager)
+            : lineManager(lineManager) {
+        // Canonical names
+        registry["MovingAverage"] = [this]() { return std::make_shared<MovingAverageStrategy>(this->lineManager); };
+        registry["RSI"]           = [this]() { return std::make_shared<RSIStrategy>(this->lineManager); };
+        registry["MACD"]          = [this]() { return std::make_shared<MACDStrategy>(this->lineManager); };
 
-    explicit TALibStrategyFactory(boost::shared_ptr<LineManager::LineManager> & lineManager)
-            : lineManager(lineManager)
-    {
-
-        registry["MovingAverage"] = [lineManager]() { return std::make_shared<MovingAverageStrategy>(lineManager); };
-        registry["SMA"] = registry["MovingAverage"];  // MovingAverage 和 SMA 使用相同的策略实例
-        registry["MA"] = registry["MovingAverage"];   // MovingAverage 和 MA 使用相同的策略实例
-
-        registry["RSI"] = [lineManager]() { return std::make_shared<RSIStrategy>(lineManager); };
-        registry["MACD"] = [lineManager]() { return std::make_shared<MACDStrategy>(lineManager); };
-        // 其他策略注册
-//         registry["MACD"] = [lineManager]() { return std::make_unique<MACDStrategy>(lineManager); };
-
+        // Aliases
+        registry["SMA"] = registry["MovingAverage"];
+        registry["MA"]  = registry["MovingAverage"];
     }
+
+    // Backward compatible signature: columnNames is CSV (e.g. "Close" or "Open,High,Low,Close")
+    std::shared_ptr<TALibStrategy> createStrategy(const std::string& strategyName,
+                                                  const std::string& columnNamesCsv,
+                                                  StrategyParams params);
+
 private:
     std::map<std::string, std::function<std::shared_ptr<TALibStrategy>()>> registry;
-
-
     boost::shared_ptr<LineManager::LineManager> lineManager;
 };
 
-
-
-
-#endif //TRADERBACKTEST_STRATEGYFACTORY_H
+#endif // TRADERBACKTEST_STRATEGYFACTORY_H

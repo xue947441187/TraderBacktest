@@ -1,52 +1,68 @@
 //
-// Created by 薛新岗 on 2024/5/15.
+// trading_module.h (rewritten)
+// A high-level facade around EnhancedTradingEngine, keeping your old API.
+// This makes backtest code simple while ensuring correct accounting.
 //
-
 #ifndef TRADERBACKTEST_TRADING_MODULE_H
 #define TRADERBACKTEST_TRADING_MODULE_H
-
 
 #include <vector>
 #include <string>
 #include <cmath>
 
+#include "EnhancedTradingEngine.h"
 
-struct Trade {
-    std::string date;
-    std::string symbol;
-    double price;
-    int quantity;
-    double commission;
-};
+// Kept for compatibility with your existing backtest result code.
 struct TradeInfo {
     std::string date;
     std::string symbol;
-    double price;
-    int quantity;
-    std::string type; // "buy" 或 "sell"
-    double commissionPercentage; // 手续费百分比
-    double commission;
+    double price = 0.0;               // executed price
+    int quantity = 0;
+    std::string type;                 // "buy" or "sell"
+    double commissionPercentage = 0.0;
+    double commission = 0.0;
+    std::string position_effect;      // open/increase/reduce/close
 };
 
 class TradingModule {
 public:
-    TradingModule(double commissionPercentage = 0); // 构造函数，设置手续费百分比
-    void executeTrade(const std::string& date, const std::string& symbol, double price, int quantity);
-    double calculateCommission(double price, int quantity);
-    double calculateProfitLoss(double buyPrice, double sellPrice, int quantity);
-    void buy(const std::string& date, const std::string& symbol, double price, int quantity);
-    void sell(const std::string& date, const std::string& symbol, double price, int quantity);
+    // commissionPercentage matches your existing parameter name.
+    // initialCapital optional; if not set, call setInitialCapital() before trading.
+    explicit TradingModule(double commissionPercentage = 0.0,
+                           double slippageRate = 0.0,
+                           double initialCapital = 0.0);
+
+    // Legacy API:
+    // - buy/sell record a trade if it is valid.
+    // - returns bool to let caller handle rejected trades (was void before).
+    bool buy(const std::string& date, const std::string& symbol, double price, int quantity);
+    bool sell(const std::string& date, const std::string& symbol, double price, int quantity);
+
+    // Optional legacy method (kept). Executes market buy by default.
+    bool executeTrade(const std::string& date, const std::string& symbol, double price, int quantity);
+
+    // Simple helpers
+    double calculateCommission(double price, int quantity) const;
+    double calculateProfitLoss(double buyPrice, double sellPrice, int quantity) const;
+
+    // Results
     std::vector<TradeInfo> getTradeInfoList() const;
-    void setBuyQuantity(int quantity);
-    int getBuyQuantity();
+    double cash() const noexcept { return engine_.cash(); }
+    double realizedPnL() const noexcept { return engine_.total_realized_pnl(); }
+    double totalCommission() const noexcept { return engine_.total_commission_paid(); }
+
+    // Old behavior
+    void setBuyQuantity(int quantity) { buyQuantity_ = quantity; }
+    int getBuyQuantity() const noexcept { return buyQuantity_; }
+
+    void setInitialCapital(double capital);
+
 private:
-    double totalcommission;
-    double commissionPercentage; // 手续费百分比
-    std::vector<TradeInfo> tradeInfoList; // 交易信息列表
+    EnhancedTradingEngine engine_;
+    double commissionPercentage_ = 0.0;
+    double slippageRate_ = 0.0;
 
-    int buyQuantity = 0; // 存储之前买入时的交易数量，初始值为0
-    void addTrade(const std::string &date,const std::string &symbol,double price,int quantity,const std::string &type,double commission);
+    int buyQuantity_ = 0;
 };
-
 
 #endif //TRADERBACKTEST_TRADING_MODULE_H

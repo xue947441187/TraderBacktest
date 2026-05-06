@@ -32,3 +32,11 @@ cmake-build-debug-visual-studio/
 # 忽略备份文件
 *.bak
 *.backup
+
+.continue/docs/new-doc.yaml
+
+.continue/mcpServers/new-mcp-server.yaml
+
+.continue/rules/new-rule.md
+
+include/EnhancedTradingEngine.h

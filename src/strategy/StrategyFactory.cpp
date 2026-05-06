@@ -1,22 +1,21 @@
 //
-// Created by 94744 on 2024/9/16.
+// Reorganized Strategy Factory
+// 2026-02-01
 //
-
 #include "strategy/StrategyFactory.h"
-#include "strategy/TALibStrategy.h"
 
 std::shared_ptr<TALibStrategy> TALibStrategyFactory::createStrategy(
-        const std::string &strategyName,
-        const std::string& columnNames,
-        const StrategyParams params)
-{
+        const std::string& strategyName,
+        const std::string& columnNamesCsv,
+        StrategyParams params) {
+
     auto it = registry.find(strategyName);
-    if (it != registry.end()) {
-        auto strategy = it->second();  // 创建策略
-        strategy->setInputColumns(columnNames);
-        strategy->setParams(params); // 设置策略参数
-        return strategy;
-    } else {
+    if (it == registry.end()) {
         throw std::invalid_argument("Unknown strategy: " + strategyName);
     }
+
+    auto strategy = it->second();
+    strategy->setInputColumns(columnNamesCsv);  // CSV parsing happens inside base class
+    strategy->setParams(params);
+    return strategy;
 }
